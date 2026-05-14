@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Cosmic Botany — Orbital Period Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#050507;--panel:#0a0a0d;--border:#1c1b18;
+    --text:#d4cfc4;--dim:#5a564c;--accent:#9e9888;
+    --line:#d4cfc4;
+    --radius:3px;
+  }
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'EB Garamond',Georgia,serif;font-size:15px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+
+  #app{display:grid;height:100%;width:100%;grid-template-columns:200px 1fr 230px;grid-template-rows:1fr;gap:0}
+
+  .panel{background:var(--panel);padding:20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .panel.left{border-right:1px solid var(--border)}
+  .panel.right{border-left:1px solid var(--border)}
+  .panel h2{font-size:10px;text-transform:uppercase;letter-spacing:4px;color:var(--dim);font-weight:400;margin-bottom:0}
+
+  #canvas-wrap{position:relative;overflow:hidden;background:var(--bg)}
+  #canvas-wrap canvas{display:block}
+
+  label{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--dim);display:block;margin-bottom:6px;font-weight:400}
+
+  select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:'EB Garamond',serif;font-size:16px;cursor:pointer;transition:border-color .2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 4l3 3 3-3' stroke='%235a564c' stroke-width='1' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+  select:focus{outline:none;border-color:var(--accent)}
+
+  button{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;color:var(--text);font-family:'EB Garamond',serif;font-size:14px;font-weight:400;cursor:pointer;transition:all .15s;letter-spacing:1.5px}
+  button:active{transform:scale(.97)}
+  button.primary{border-color:var(--accent);color:var(--text)}
+
+  .btn-row{display:flex;gap:8px}
+  .btn-row button{flex:1}
+
+  input[type=range]{-webkit-appearance:none;width:100%;height:1px;background:var(--border);outline:none;margin-top:10px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:transparent;border:1px solid var(--accent);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:transparent;border:1px solid var(--accent);cursor:pointer}
+
+  .speed-val{text-align:center;color:var(--dim);font-size:14px;font-weight:400;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:1px}
+
+  .data-block{border-bottom:1px solid var(--border);padding:10px 0}
+  .data-block .label{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--dim);margin-bottom:4px;font-weight:400}
+  .data-block .value{font-size:22px;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:1px}
+  .data-block .value.small{font-size:14px;margin-top:2px;color:var(--dim)}
+
+  .velocity-compare{display:flex;gap:12px;border-bottom:1px solid var(--border);padding-bottom:10px}
+  .velocity-compare div{flex:1}
+  .velocity-compare .vel-val{font-size:15px;color:var(--text);font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+
+  .event-box{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;transition:all .4s ease}
+  .event-box .tag{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;margin-bottom:4px;font-weight:400;color:var(--dim)}
+  .event-box .target-val{font-size:12px;color:var(--dim);margin-bottom:6px}
+
+  .progress-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .progress-bar{flex:1;height:1px;background:var(--border);overflow:hidden;position:relative}
+  .progress-bar .fill{height:100%;transition:width .1s linear;background:var(--dim)}
+  .progress-pct{font-size:11px;color:var(--dim);min-width:32px;text-align:right;font-variant-numeric:tabular-nums}
+
+  .event-box .result{font-size:17px;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+  .event-box .result.pending{color:var(--dim);font-style:italic;font-size:12px}
+  .event-box.reached{border-color:var(--accent)}
+  .event-box.reached .tag{color:var(--text)}
+  .event-box.reached .fill{background:var(--accent)}
+
+  .legend{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);letter-spacing:.5px}
+  .legend-item .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;border:1px solid var(--dim);background:transparent}
+  .legend-item .dot.filled{background:var(--dim)}
+
+  .info-note{font-size:12px;color:var(--dim);line-height:1.7;margin-top:auto;padding-top:12px;border-top:1px solid var(--border);font-style:italic;letter-spacing:.3px}
+
+  @media(max-width:900px){
+    #app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+    .panel{border:none !important;padding:14px 16px;gap:10px}
+    .panel.left{border-bottom:1px solid var(--border) !important;flex-direction:row;flex-wrap:wrap;align-items:flex-end}
+    .panel.left>*{flex:1;min-width:110px}
+    .panel.left h2{flex-basis:100%}
+    .panel.right{border-top:1px solid var(--border) !important;flex-direction:row;flex-wrap:wrap;align-items:flex-start}
+    .panel.right h2{flex-basis:100%}
+    .panel.right>*{flex:1;min-width:130px}
+    .panel.right .legend{flex-basis:100%;flex-direction:row;gap:14px}
+    .panel.right .info-note{flex-basis:100%}
+  }
+  @media(max-width:500px){
+    .panel{padding:10px 12px}
+    select,button{padding:12px;font-size:16px}
+    input[type=range]::-webkit-slider-thumb{width:20px;height:20px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="panel left">
+    <h2>Controls</h2>
+    <div>
+      <label for="planet-select">Target Planet</label>
+      <select id="planet-select">
+        <option value="Mercury">☿  Mercury</option>
+        <option value="Venus">♀  Venus</option>
+        <option value="Mars" selected>♂  Mars</option>
+        <option value="Jupiter">♃  Jupiter</option>
+        <option value="Saturn">♄  Saturn</option>
+        <option value="Uranus">♅  Uranus</option>
+        <option value="Neptune">♆  Neptune</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button id="btn-play" class="primary">Play</button>
+      <button id="btn-reset">Reset</button>
+    </div>
+    <div>
+      <label for="speed-slider">Speed</label>
+      <input type="range" id="speed-slider" min="0" max="100" value="40">
+      <div class="speed-val" id="speed-display">1×</div>
+    </div>
+    <div class="info-note">
+      Both planets begin aligned at 0°. Sidereal measures absolute orbit; synodic measures relative realignment.
+    </div>
+  </div>
+
+  <div id="canvas-wrap"></div>
+
+  <div class="panel right">
+    <h2>Data</h2>
+    <div class="data-block">
+      <div class="label">Elapsed Days</div>
+      <div class="value" id="elapsed-days">0</div>
+    </div>
+
+    <div class="velocity-compare">
+      <div>
+        <div class="label">⊕ Earth</div>
+        <div class="vel-val" id="earth-vel">0.986°/d</div>
+      </div>
+      <div>
+        <div class="label" id="vel-planet-label">♂ Mars</div>
+        <div class="vel-val" id="target-vel">0.524°/d</div>
+      </div>
+    </div>
+
+    <div class="event-box sidereal" id="event-sidereal">
+      <div class="tag">Sidereal Period</div>
+      <div class="target-val" id="sidereal-target">Target: 687 days</div>
+      <div class="progress-row">
+        <div class="progress-bar"><div class="fill" id="sidereal-fill" style="width:0%"></div></div>
+        <div class="progress-pct" id="sidereal-pct">0%</div>
+      </div>
+      <div class="result pending" id="sidereal-result">Waiting…</div>
+    </div>
+
+    <div class="event-box synodic" id="event-synodic">
+      <div class="tag">Synodic Period</div>
+      <div class="target-val" id="synodic-target">Target: 780 days</div>
+      <div class="progress-row">
+        <div class="progress-bar"><div class="fill" id="synodic-fill" style="width:0%"></div></div>
+        <div class="progress-pct" id="synodic-pct">0%</div>
+      </div>
+      <div class="result pending" id="synodic-result">Waiting…</div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="dot"></span> Earth orbit</div>
+      <div class="legend-item"><span class="dot"></span> <span id="legend-target">Mars</span> orbit</div>
+      <div class="legend-item"><span class="dot filled"></span> Sidereal return</div>
+      <div class="legend-item"><span class="dot filled"></span> Synodic alignment</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SYMBOLS = {
+  Mercury: '☿', Venus: '♀', Mars: '♂',
+  Jupiter: '♃', Saturn: '♄', Uranus: '♅', Neptune: '♆',
+};
+const PLANETS = {
+  Mercury:  { sidereal: 88,    synodic: 116,  au: 0.387 },
+  Venus:    { sidereal: 225,   synodic: 584,  au: 0.723 },
+  Mars:     { sidereal: 687,   synodic: 780,  au: 1.524 },
+  Jupiter:  { sidereal: 4333,  synodic: 399,  au: 5.203 },
+  Saturn:   { sidereal: 10759, synodic: 378,  au: 9.537 },
+  Uranus:   { sidereal: 30687, synodic: 370,  au: 19.191 },
+  Neptune:  { sidereal: 60190, synodic: 367,  au: 30.069 },
+};
+const EARTH = { sidereal: 365.25, au: 1.0 };
+const W = [212, 207, 196]; // warm white
+
+let selected = 'Mars';
+let playing = false;
+let elapsedDays = 0;
+let earthAngle = 0;
+let targetAngle = 0;
+let siderealReached = false;
+let synodicReached = false;
+let siderealDay = 0;
+let synodicDay = 0;
+let siderealFlashTimer = 0;
+let synodicFlashTimer = 0;
+let prevRelAngle = 0;
+let prevTargetAngle = 0;
+let siderealSnapshot = null;
+let synodicSnapshot = null;
+
+const earthTrail = [];
+const targetTrail = [];
+const TRAIL_MAX = 600;
+let stars = [];
+
+const earthAngularVel = 360 / EARTH.sidereal;
+
+function getSpeed(v) { return Math.pow(10, (v / 100) * 4 - 1); }
+
+function resetSim() {
+  playing = false; elapsedDays = 0; earthAngle = 0; targetAngle = 0;
+  siderealReached = false; synodicReached = false;
+  siderealDay = 0; synodicDay = 0;
+  siderealFlashTimer = 0; synodicFlashTimer = 0;
+  prevRelAngle = 0; prevTargetAngle = 0;
+  siderealSnapshot = null; synodicSnapshot = null;
+  earthTrail.length = 0; targetTrail.length = 0;
+  updateUI();
+  document.getElementById('btn-play').textContent = 'Play';
+  ['event-sidereal','event-synodic'].forEach(id => document.getElementById(id).classList.remove('reached'));
+  ['sidereal-result','synodic-result'].forEach(id => { const e = document.getElementById(id); e.textContent = 'Waiting…'; e.className = 'result pending'; });
+  ['sidereal-fill','synodic-fill'].forEach(id => document.getElementById(id).style.width = '0%');
+  ['sidereal-pct','synodic-pct'].forEach(id => document.getElementById(id).textContent = '0%');
+}
+
+function updateUI() {
+  const pl = PLANETS[selected], sym = SYMBOLS[selected];
+  document.getElementById('vel-planet-label').textContent = sym + ' ' + selected;
+  document.getElementById('earth-vel').textContent = (360 / EARTH.sidereal).toFixed(3) + '°/d';
+  document.getElementById('target-vel').textContent = (360 / pl.sidereal).toFixed(3) + '°/d';
+  document.getElementById('sidereal-target').textContent = 'Target: ' + pl.sidereal.toLocaleString() + ' days';
+  document.getElementById('synodic-target').textContent = 'Target: ' + pl.synodic.toLocaleString() + ' days';
+  document.getElementById('legend-target').textContent = selected;
+  document.getElementById('elapsed-days').textContent = Math.floor(elapsedDays).toLocaleString();
+}
+
+function updateSpeedDisplay() {
+  const s = getSpeed(parseFloat(document.getElementById('speed-slider').value));
+  let l; if (s < 1) l = s.toFixed(2)+'×'; else if (s < 100) l = s.toFixed(1)+'×';
+  else if (s < 10000) l = Math.round(s).toLocaleString()+'×'; else l = (s/1000).toFixed(1)+'k×';
+  document.getElementById('speed-display').textContent = l;
+}
+
+document.getElementById('planet-select').addEventListener('change', e => { selected = e.target.value; resetSim(); });
+document.getElementById('btn-play').addEventListener('click', () => { playing = !playing; document.getElementById('btn-play').textContent = playing ? 'Pause' : 'Play'; });
+document.getElementById('btn-reset').addEventListener('click', resetSim);
+document.getElementById('speed-slider').addEventListener('input', updateSpeedDisplay);
+updateSpeedDisplay();
+
+const canvasWrap = document.getElementById('canvas-wrap');
+
+new p5(p => {
+  let cw, ch;
+
+  function genStars() {
+    stars = [];
+    for (let i = 0; i < 120; i++) {
+      stars.push({ x: p.random(cw), y: p.random(ch), s: p.random(0.4, 1.2), b: p.random(20, 70), tw: p.random(0.005, 0.02), to: p.random(p.TWO_PI) });
+    }
+  }
+
+  p.setup = () => {
+    const r = canvasWrap.getBoundingClientRect();
+    cw = r.width; ch = r.height;
+    p.createCanvas(cw, ch).parent(canvasWrap);
+    p.textFont('EB Garamond, Georgia, serif');
+    genStars();
+  };
+
+  p.windowResized = () => {
+    const r = canvasWrap.getBoundingClientRect();
+    cw = r.width; ch = r.height;
+    p.resizeCanvas(cw, ch); genStars();
+  };
+
+  function atp(cx, cy, r, deg) {
+    const rad = p.radians(-90 + deg);
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  function dashedCircle(cx, cy, r, dashArc, gapArc) {
+    for (let a = 0; a < p.TWO_PI; a += dashArc + gapArc) {
+      p.arc(cx, cy, r * 2, r * 2, a, Math.min(a + dashArc, p.TWO_PI));
+    }
+  }
+
+  function drawGhost(pos, size, label, style) {
+    const a = style === 'solid' ? 160 : 120;
+    p.noFill();
+    p.stroke(W[0], W[1], W[2], a);
+    p.strokeWeight(0.6);
+    p.ellipse(pos.x, pos.y, size * 2.4, size * 2.4);
+    const arm = size * 1.4;
+    p.stroke(W[0], W[1], W[2], a * 0.4);
+    p.strokeWeight(0.4);
+    p.line(pos.x - arm, pos.y, pos.x + arm, pos.y);
+    p.line(pos.x, pos.y - arm, pos.x, pos.y + arm);
+    p.noStroke();
+    p.fill(W[0], W[1], W[2], a);
+    p.ellipse(pos.x, pos.y, 2.5, 2.5);
+    if (label) {
+      p.fill(W[0], W[1], W[2], a * 0.7);
+      p.textSize(9);
+      p.textAlign(p.CENTER, p.TOP);
+      p.text(label, pos.x, pos.y + size * 1.6);
+    }
+  }
+
+  p.draw = () => {
+    const planet = PLANETS[selected];
+    const targetAngularVel = 360 / planet.sidereal;
+
+    // --- SIM ---
+    if (playing && !synodicReached) {
+      const dt = getSpeed(parseFloat(document.getElementById('speed-slider').value)) / 60;
+      prevTargetAngle = targetAngle % 360;
+      prevRelAngle = ((targetAngle - earthAngle) % 360 + 360) % 360;
+      elapsedDays += dt;
+      earthAngle += earthAngularVel * dt;
+      targetAngle += targetAngularVel * dt;
+
+      if (!siderealReached && targetAngle >= 360 && prevTargetAngle < 360) {
+        siderealReached = true; siderealDay = elapsedDays; siderealFlashTimer = 180;
+        siderealSnapshot = { earthAngle, targetAngle };
+        document.getElementById('event-sidereal').classList.add('reached');
+        const r = document.getElementById('sidereal-result');
+        r.textContent = Math.round(siderealDay).toLocaleString() + ' days'; r.className = 'result';
+      }
+
+      if (!synodicReached && elapsedDays > 5) {
+        const rel = ((targetAngle - earthAngle) % 360 + 360) % 360;
+        if ((prevRelAngle > 340 && rel < 20) || (prevRelAngle > 1 && rel < 1)) {
+          synodicReached = true; synodicDay = elapsedDays; synodicFlashTimer = 240;
+          playing = false; synodicSnapshot = { earthAngle, targetAngle };
+          document.getElementById('btn-play').textContent = 'Play';
+          document.getElementById('event-synodic').classList.add('reached');
+          const r = document.getElementById('synodic-result');
+          r.textContent = Math.round(synodicDay).toLocaleString() + ' days'; r.className = 'result';
+        }
+      }
+
+      document.getElementById('elapsed-days').textContent = Math.floor(elapsedDays).toLocaleString();
+      if (!siderealReached) {
+        const sp = Math.min(100, (targetAngle / 360) * 100);
+        document.getElementById('sidereal-fill').style.width = sp + '%';
+        document.getElementById('sidereal-pct').textContent = Math.floor(sp) + '%';
+      } else { document.getElementById('sidereal-fill').style.width = '100%'; document.getElementById('sidereal-pct').textContent = '100%'; }
+      if (!synodicReached) {
+        const rn = ((targetAngle - earthAngle) % 360 + 360) % 360;
+        const sp = rn < 1 ? 100 : (1 - rn / 360) * 100;
+        document.getElementById('synodic-fill').style.width = Math.max(0, Math.min(100, sp)) + '%';
+        document.getElementById('synodic-pct').textContent = Math.floor(Math.max(0, Math.min(100, sp))) + '%';
+      } else { document.getElementById('synodic-fill').style.width = '100%'; document.getElementById('synodic-pct').textContent = '100%'; }
+    }
+
+    // --- DRAW ---
+    p.background(5, 5, 7);
+    const cx = cw / 2, cy = ch / 2;
+    const maxR = Math.min(cw, ch) * 0.38;
+
+    // Stars
+    p.noStroke();
+    for (const s of stars) {
+      const tw = Math.sin(p.frameCount * s.tw + s.to);
+      p.fill(W[0], W[1], W[2], s.b + tw * 15);
+      p.ellipse(s.x, s.y, s.s, s.s);
+    }
+
+    const outerAU = Math.max(EARTH.au, planet.au);
+    const earthR = (EARTH.au / outerAU) * maxR;
+    const targetR = (planet.au / outerAU) * maxR;
+
+    // --- DEGREE TICKS ---
+    const tickR = maxR * 1.06;
+    for (let deg = 0; deg < 360; deg += 10) {
+      const outer = atp(cx, cy, tickR, deg);
+      const len = deg % 30 === 0 ? 7 : 3;
+      const inner = atp(cx, cy, tickR - len, deg);
+      p.stroke(W[0], W[1], W[2], deg % 30 === 0 ? 50 : 20);
+      p.strokeWeight(deg % 30 === 0 ? 0.6 : 0.3);
+      p.line(inner.x, inner.y, outer.x, outer.y);
+    }
+    p.noStroke(); p.fill(W[0], W[1], W[2], 40); p.textSize(9);
+    p.textAlign(p.CENTER, p.CENTER);
+    for (let deg = 0; deg < 360; deg += 30) {
+      const lp = atp(cx, cy, tickR + 11, deg);
+      p.text(deg + '°', lp.x, lp.y);
+    }
+
+    // Outer ring
+    p.noFill(); p.stroke(W[0], W[1], W[2], 18); p.strokeWeight(0.4);
+    p.ellipse(cx, cy, tickR * 2, tickR * 2);
+
+    // Orbit paths — dotted
+    p.noFill(); p.strokeWeight(0.5);
+    p.stroke(W[0], W[1], W[2], 35);
+    dashedCircle(cx, cy, earthR, 0.03, 0.04);
+    p.stroke(W[0], W[1], W[2], 22);
+    dashedCircle(cx, cy, targetR, 0.02, 0.05);
+
+    // Start line — 0° dashed
+    p.stroke(W[0], W[1], W[2], 30); p.strokeWeight(0.5);
+    for (let y = cy - tickR + 2; y < cy - 10; y += 6) {
+      p.line(cx, y, cx, Math.min(y + 3, cy - 10));
+    }
+
+    // Planet positions
+    const ePos = atp(cx, cy, earthR, earthAngle);
+    const tPos = atp(cx, cy, targetR, targetAngle);
+
+    // Trails — fine dots
+    if (playing || elapsedDays > 0) {
+      earthTrail.push({ x: ePos.x, y: ePos.y });
+      targetTrail.push({ x: tPos.x, y: tPos.y });
+      if (earthTrail.length > TRAIL_MAX) earthTrail.shift();
+      if (targetTrail.length > TRAIL_MAX) targetTrail.shift();
+    }
+    p.noStroke();
+    for (let i = 0; i < earthTrail.length; i += 2) {
+      const a = (i / earthTrail.length) * 20;
+      p.fill(W[0], W[1], W[2], a);
+      p.ellipse(earthTrail[i].x, earthTrail[i].y, 1.2, 1.2);
+    }
+    for (let i = 0; i < targetTrail.length; i += 2) {
+      const a = (i / targetTrail.length) * 20;
+      p.fill(W[0], W[1], W[2], a);
+      p.ellipse(targetTrail[i].x, targetTrail[i].y, 1.2, 1.2);
+    }
+
+    // Sidereal sweep arc
+    if (!siderealReached && elapsedDays > 0) {
+      p.noFill(); p.stroke(W[0], W[1], W[2], 10); p.strokeWeight(Math.max(3, targetR * 0.035));
+      p.arc(cx, cy, targetR * 2, targetR * 2, p.radians(-90), p.radians(-90 + targetAngle));
+    }
+
+    // Synodic wedge
+    if (elapsedDays > 0 && !synodicReached) {
+      const eAng = p.radians(-90 + earthAngle);
+      const tAng = p.radians(-90 + targetAngle);
+      const wedgeR = Math.min(earthR, targetR) * 0.6;
+      const startA = Math.min(eAng, tAng), endA = Math.max(eAng, tAng);
+      const diff = endA - startA;
+      const aS = diff > Math.PI ? endA : startA;
+      const aE = diff > Math.PI ? startA + Math.PI * 2 : endA;
+      // Wedge outline only
+      p.noFill(); p.stroke(W[0], W[1], W[2], 15); p.strokeWeight(0.4);
+      p.line(cx, cy, cx + Math.cos(aS) * wedgeR, cy + Math.sin(aS) * wedgeR);
+      p.line(cx, cy, cx + Math.cos(aE) * wedgeR, cy + Math.sin(aE) * wedgeR);
+      p.arc(cx, cy, wedgeR * 2, wedgeR * 2, aS, aE);
+      // Angle label
+      const relAngle = ((targetAngle - earthAngle) % 360 + 360) % 360;
+      const displayAngle = relAngle > 180 ? 360 - relAngle : relAngle;
+      if (displayAngle > 5) {
+        const midA = (aS + aE) / 2;
+        p.noStroke(); p.fill(W[0], W[1], W[2], 50); p.textSize(10);
+        p.textAlign(p.CENTER, p.CENTER);
+        p.text(Math.round(displayAngle) + '°', cx + Math.cos(midA) * wedgeR * 0.4, cy + Math.sin(midA) * wedgeR * 0.4);
+      }
+    }
+
+    // --- SIDEREAL GHOST ---
+    if (siderealSnapshot) {
+      const sE = atp(cx, cy, earthR, siderealSnapshot.earthAngle);
+      const sT = atp(cx, cy, targetR, siderealSnapshot.targetAngle);
+      const gs = Math.max(6, maxR * 0.025);
+      // Radial line
+      p.stroke(W[0], W[1], W[2], 20); p.strokeWeight(0.4);
+      p.line(cx, cy, cx, cy - tickR);
+      drawGhost(sT, gs, 'Sidereal', 'solid');
+      drawGhost(sE, gs * 0.6, null, 'solid');
+      // Dashed connector
+      p.stroke(W[0], W[1], W[2], 18); p.strokeWeight(0.4);
+      const dx = sT.x - sE.x, dy = sT.y - sE.y, dist = Math.sqrt(dx*dx+dy*dy);
+      for (let i = 0; i < Math.floor(dist / 8); i++) {
+        const t1 = (i*8)/dist, t2 = (i*8+3)/dist;
+        if (t2 <= 1) p.line(sE.x+dx*t1, sE.y+dy*t1, sE.x+dx*t2, sE.y+dy*t2);
+      }
+      if (siderealFlashTimer > 0) {
+        siderealFlashTimer--;
+        const pulse = 1 - siderealFlashTimer / 180;
+        p.noFill(); p.stroke(W[0], W[1], W[2], (1-pulse)*40); p.strokeWeight(0.5);
+        p.ellipse(sT.x, sT.y, gs*(3+pulse*8), gs*(3+pulse*8));
+      }
+    }
+
+    // --- SYNODIC GHOST ---
+    if (synodicSnapshot) {
+      const synE = atp(cx, cy, earthR, synodicSnapshot.earthAngle);
+      const synT = atp(cx, cy, targetR, synodicSnapshot.targetAngle);
+      const gs = Math.max(6, maxR * 0.025);
+      const alignAngle = p.radians(-90 + synodicSnapshot.earthAngle);
+      const far = tickR;
+      p.stroke(W[0], W[1], W[2], 25); p.strokeWeight(0.5);
+      p.line(cx-Math.cos(alignAngle)*far, cy-Math.sin(alignAngle)*far, cx+Math.cos(alignAngle)*far, cy+Math.sin(alignAngle)*far);
+      drawGhost(synT, gs, 'Synodic', 'dashed');
+      drawGhost(synE, gs * 0.6, null, 'dashed');
+      if (synodicFlashTimer > 0) {
+        synodicFlashTimer--;
+        const pulse = 1 - synodicFlashTimer / 240;
+        p.noFill(); p.stroke(W[0], W[1], W[2], (1-pulse)*35); p.strokeWeight(0.5);
+        p.ellipse(synT.x, synT.y, gs*(3+pulse*10), gs*(3+pulse*10));
+        p.ellipse(synE.x, synE.y, gs*(3+pulse*8), gs*(3+pulse*8));
+      }
+    }
+
+    // Live connector — thin line
+    p.stroke(W[0], W[1], W[2], synodicReached ? 50 : 18);
+    p.strokeWeight(0.5);
+    p.line(ePos.x, ePos.y, tPos.x, tPos.y);
+
+    // Sun — circle with dot (☉)
+    const sp = 6 + Math.sin(p.frameCount * 0.015) * 0.5;
+    p.noFill(); p.stroke(W[0], W[1], W[2], 60); p.strokeWeight(0.6);
+    p.ellipse(cx, cy, sp * 2.2, sp * 2.2);
+    p.noStroke(); p.fill(W[0], W[1], W[2], 80);
+    p.ellipse(cx, cy, 2.5, 2.5);
+
+    // Earth — open circle
+    const es = Math.max(6, maxR * 0.025);
+    p.noFill(); p.stroke(W[0], W[1], W[2], 180); p.strokeWeight(0.8);
+    p.ellipse(ePos.x, ePos.y, es, es);
+    // Cross inside (⊕)
+    const ec = es * 0.35;
+    p.strokeWeight(0.5);
+    p.line(ePos.x - ec, ePos.y, ePos.x + ec, ePos.y);
+    p.line(ePos.x, ePos.y - ec, ePos.x, ePos.y + ec);
+    // Label
+    p.noStroke(); p.fill(W[0], W[1], W[2], 100);
+    p.textSize(9); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text(Math.floor(earthAngle % 360) + '°', ePos.x, ePos.y - es * 0.8 - 3);
+
+    // Target — open circle
+    const ts = Math.max(6, maxR * 0.025);
+    let tAlpha = 180;
+    if (siderealFlashTimer > 0 && !synodicReached) tAlpha = 180 + Math.sin(siderealFlashTimer * 0.2) * 60;
+    if (synodicFlashTimer > 0) tAlpha = 180 + Math.sin(synodicFlashTimer * 0.15) * 60;
+    p.noFill(); p.stroke(W[0], W[1], W[2], tAlpha); p.strokeWeight(0.8);
+    p.ellipse(tPos.x, tPos.y, ts, ts);
+    p.noStroke(); p.fill(W[0], W[1], W[2], tAlpha * 0.5);
+    p.ellipse(tPos.x, tPos.y, 2, 2);
+    // Symbol + angle
+    p.fill(W[0], W[1], W[2], 100);
+    p.textSize(9); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text(SYMBOLS[selected] + ' ' + Math.floor(targetAngle % 360) + '°', tPos.x, tPos.y - ts * 0.8 - 3);
+
+    // Status
+    if (!playing && elapsedDays === 0) {
+      p.fill(W[0], W[1], W[2], 35); p.textSize(13);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.text('Press Play to begin', cx, cy + maxR + 24);
+    }
+    if (synodicReached && synodicFlashTimer > 100) {
+      p.fill(W[0], W[1], W[2], Math.min(60, (240-synodicFlashTimer)*2));
+      p.textSize(12); p.textAlign(p.CENTER, p.CENTER);
+      p.text('Synodic alignment', cx, cy + maxR + 24);
+    }
+  };
+});
+</script>
+</body>
+</html>

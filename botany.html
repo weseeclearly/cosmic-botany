@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Cosmic Botany — Planetary Rhythms in Plant Form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#efecea;--panel:#f6f4f1;--border:#d4cfc6;
+    --text:#2c2824;--dim:#7a7268;--accent:#8a6e2e;
+    --canvas-bg:#cfdae4;
+    --radius:4px;
+  }
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'EB Garamond',Georgia,serif;font-size:15px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+
+  #app{display:grid;height:100%;width:100%;grid-template-columns:240px 1fr 240px;grid-template-rows:1fr;gap:0}
+
+  .panel{background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .panel.left{border-right:1px solid var(--border)}
+  .panel.right{border-left:1px solid var(--border)}
+  .panel h1{font-size:20px;font-weight:600;letter-spacing:.5px;line-height:1.3}
+  .panel h2{font-size:10px;text-transform:uppercase;letter-spacing:3px;color:var(--dim);font-weight:500;margin-top:2px}
+
+  #canvas-wrap{position:relative;overflow:hidden;background:var(--canvas-bg)}
+  #canvas-wrap canvas{display:block}
+
+  label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);display:block;margin-bottom:6px;font-weight:500}
+
+  select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:'EB Garamond',serif;font-size:16px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 4l3 3 3-3' stroke='%237a7268' stroke-width='1.2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+  select:focus{outline:none;border-color:var(--accent)}
+
+  .correspondence{border-top:1px solid var(--border);padding-top:14px}
+  .correspondence h3{font-size:15px;font-weight:600;margin-bottom:4px}
+  .correspondence .planet-sym{font-size:20px;margin-right:4px}
+  .correspondence p{font-size:14px;color:var(--dim);line-height:1.6;margin-top:4px}
+  .correspondence .detail{font-size:13px;color:var(--dim);line-height:1.5;margin-top:8px;padding-left:12px;border-left:2px solid var(--border)}
+
+  .data-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  .data-table td{padding:3px 0;color:var(--dim)}
+  .data-table td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--text);font-weight:500}
+
+  .nav-link{font-size:13px;color:var(--accent);text-decoration:none;letter-spacing:.5px;padding-top:12px;border-top:1px solid var(--border)}
+  .nav-link:hover{text-decoration:underline}
+
+  .section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);font-weight:500;padding-top:10px;border-top:1px solid var(--border)}
+
+  .key-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+  .key-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+  @media(max-width:900px){
+    html,body{overflow:auto}
+    #app{grid-template-columns:1fr;grid-template-rows:auto minmax(50vh,1fr) auto;height:auto;min-height:100%}
+    .panel{border:none !important;padding:14px 16px;gap:10px}
+    .panel.left{border-bottom:1px solid var(--border) !important;flex-direction:row;flex-wrap:wrap;align-items:flex-end}
+    .panel.left>*{flex:1;min-width:140px}
+    .panel.left h1,.panel.left h2{flex-basis:100%}
+    .panel.left .correspondence{display:none}
+    .panel.right{border-top:1px solid var(--border) !important;max-height:30vh}
+    #canvas-wrap{min-height:50vh}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="panel left">
+    <div>
+      <h1>Cosmic Botany</h1>
+      <h2>Planetary rhythms in plant form</h2>
+    </div>
+
+    <div>
+      <label for="view-select">Correspondence</label>
+      <select id="view-select">
+        <option value="mercury" selected>☿ Mercury — Monocots (3-fold)</option>
+        <option value="venus">♀ Venus — Dicots (5-fold)</option>
+        <option value="archetype">The Archetypal Plant</option>
+        <option value="buds">Bud Geometry — Path-Curves</option>
+        <option value="phyllotaxis">Phyllotaxis — Golden Angle</option>
+        <option value="seasons">Seasonal Chemistry — ⊕ Orbit</option>
+      </select>
+    </div>
+
+    <div class="correspondence" id="info-mercury">
+      <h3><span class="planet-sym">☿</span> Mercury &amp; Monocots</h3>
+      <p>Mercury's geocentric path traces a 3-lobed rosette. This 3-fold symmetry appears directly in monocot flowers: lilies, irises, tulips carry petals in multiples of three.</p>
+      <div class="detail">
+        Mercury completes ~3.15 inferior conjunctions per Earth year. The conjunctions form a triangle in the zodiac, rotating slowly. Kranich identified this 3-fold orbital archetype as the geometric signature expressed in monocot morphology.
+      </div>
+      <table class="data-table">
+        <tr><td>Sidereal period</td><td>87.97 d</td></tr>
+        <tr><td>Synodic period</td><td>115.88 d</td></tr>
+        <tr><td>Conjunctions / year</td><td>~3.15</td></tr>
+        <tr><td>Orbital radius</td><td>0.387 AU</td></tr>
+        <tr><td>Pattern symmetry</td><td>3-fold</td></tr>
+      </table>
+    </div>
+
+    <div class="correspondence" id="info-venus" style="display:none">
+      <h3><span class="planet-sym">♀</span> Venus &amp; Dicots</h3>
+      <p>Venus traces a 5-petaled rose over 8 Earth years, with exactly 5 inferior conjunctions spaced 144° apart, forming a pentagram. Dicot flowers carry parts in fives.</p>
+      <div class="detail">
+        The 8:5:13 ratio is pure Fibonacci. 8 Earth years = 5 Venus synodic periods = 13 Venus sidereal orbits. The pentagonal geometry of this orbital resonance appears in rose, apple blossom, buttercup, and geranium flowers.
+      </div>
+      <table class="data-table">
+        <tr><td>Sidereal period</td><td>224.7 d</td></tr>
+        <tr><td>Synodic period</td><td>583.9 d</td></tr>
+        <tr><td>8-year conjunctions</td><td>exactly 5</td></tr>
+        <tr><td>Conjunction spacing</td><td>144°</td></tr>
+        <tr><td>Pattern symmetry</td><td>5-fold</td></tr>
+      </table>
+    </div>
+
+    <div class="correspondence" id="info-archetype" style="display:none">
+      <h3>The Archetypal Plant</h3>
+      <p>In Kranich's morphology, each organ of the plant corresponds to a planetary sphere. The whole plant is a terrestrial image of the solar system.</p>
+      <div class="detail">
+        The root contracts toward the earth-point (Moon). The shoot rises vertically toward the cosmic periphery (Sun). Leaf arrangement encodes inner-planet rhythms (Mercury, Venus). The flower opens outward (Venus, Jupiter). The seed compresses all potential into a dormant point (Saturn).
+      </div>
+    </div>
+
+    <div class="correspondence" id="info-buds" style="display:none">
+      <h3>Bud Path-Curves</h3>
+      <p>Lawrence Edwards measured tree bud profiles as projective path-curves. The shape parameter λ oscillated in synchronization with Moon-planet conjunctions over decades of observation.</p>
+      <div class="detail">
+        Oak buds pulsed with the Moon-Mars cycle (780 d). Beech correlated with Moon-Saturn. The λ parameter controls how pointed or rounded the bud profile is; its rhythmic variation over the season maps directly onto synodic periods.
+      </div>
+    </div>
+
+    <div class="correspondence" id="info-phyllotaxis" style="display:none">
+      <h3><span class="planet-sym">☿♀</span> Phyllotaxis</h3>
+      <p>Leaves spiral around the stem at the golden angle: 137.508°. This maximizes light exposure using the same irrational ratio — φ — that governs the inner planets' orbital resonances.</p>
+      <div class="detail">
+        Venus's orbital period fits ~1.625× into Earth's year (φ ≈ 1.618). Successive Fibonacci fractions 2/5, 3/8, 5/13 describe both phyllotactic spirals and synodic conjunction counts. The plant builds these ratios into its body geometry.
+      </div>
+    </div>
+
+    <div class="correspondence" id="info-seasons" style="display:none">
+      <h3><span class="planet-sym">⊕</span> Seasonal Chemistry</h3>
+      <p>Leaf pigment transitions track Earth's orbital position. Chlorophyll dominance breaks down past a critical day-length threshold, revealing carotenes and triggering anthocyanin synthesis.</p>
+      <div class="detail">
+        The chemical shift follows solar declination angle through the year. Green → yellow → red maps a pigment phase rotation synchronized to orbital mechanics, a chemical clock keyed to Earth's position around the Sun.
+      </div>
+    </div>
+
+    <a href="index.html" class="nav-link">← Orbital Period Simulator</a>
+  </div>
+
+  <div id="canvas-wrap"></div>
+
+  <div class="panel right">
+    <div class="section-title">Key</div>
+
+    <div id="key-mercury">
+      <div class="key-row"><span class="key-dot" style="background:#7a9cba"></span> Mercury geocentric trace</div>
+      <div class="key-row"><span class="key-dot" style="background:#4a8a5c"></span> Earth (origin)</div>
+      <div class="key-row"><span class="key-dot" style="background:rgba(130,110,70,.5)"></span> Inferior conjunctions</div>
+      <div class="key-row" style="margin-top:10px"><span class="key-dot" style="background:#a06848"></span> Monocot flower (3 petals)</div>
+    </div>
+
+    <div id="key-venus" style="display:none">
+      <div class="key-row"><span class="key-dot" style="background:#c4a050"></span> Venus geocentric trace</div>
+      <div class="key-row"><span class="key-dot" style="background:#4a8a5c"></span> Earth (origin)</div>
+      <div class="key-row"><span class="key-dot" style="background:rgba(130,110,70,.5)"></span> Inferior conjunctions</div>
+      <div class="key-row" style="margin-top:10px"><span class="key-dot" style="background:#c06070"></span> Dicot flower (5 petals)</div>
+    </div>
+
+    <div id="key-archetype" style="display:none">
+      <div class="key-row"><span class="key-dot" style="background:#8a8070"></span> ☽ Root — Moon</div>
+      <div class="key-row"><span class="key-dot" style="background:#c8922a"></span> ☉ Shoot — Sun</div>
+      <div class="key-row"><span class="key-dot" style="background:#7a9cba"></span> ☿ Leaf order — Mercury</div>
+      <div class="key-row"><span class="key-dot" style="background:#c4a050"></span> ♀ Flower — Venus</div>
+      <div class="key-row"><span class="key-dot" style="background:#8a6848"></span> ♃ Fruit — Jupiter</div>
+      <div class="key-row"><span class="key-dot" style="background:#6a6560"></span> ♄ Seed — Saturn</div>
+    </div>
+
+    <div id="key-buds" style="display:none">
+      <div class="key-row"><span class="key-dot" style="background:#8a7050"></span> Bud profile (path-curve)</div>
+      <div class="key-row"><span class="key-dot" style="background:#7a6848"></span> λ parameter oscillation</div>
+      <div class="key-row"><span class="key-dot" style="background:rgba(130,110,70,.4)"></span> Synodic cycle position</div>
+    </div>
+
+    <div id="key-phyllotaxis" style="display:none">
+      <div class="key-row"><span class="key-dot" style="background:#5a8a50"></span> Leaf positions</div>
+      <div class="key-row"><span class="key-dot" style="background:rgba(130,110,70,.4)"></span> Golden angle arc (137.5°)</div>
+      <div class="key-row"><span class="key-dot" style="background:rgba(100,85,55,.25)"></span> Fibonacci spirals</div>
+    </div>
+
+    <div id="key-seasons" style="display:none">
+      <div class="key-row"><span class="key-dot" style="background:#4a8a50"></span> Chlorophyll</div>
+      <div class="key-row"><span class="key-dot" style="background:#c8a030"></span> Carotene</div>
+      <div class="key-row"><span class="key-dot" style="background:#a04050"></span> Anthocyanin</div>
+      <div class="key-row"><span class="key-dot" style="background:#4a7a9a"></span> Earth orbital position</div>
+    </div>
+
+    <div class="section-title" style="margin-top:auto">About</div>
+    <p style="font-size:13px;color:var(--dim);line-height:1.6">
+      Orbital patterns drawn from precise ephemeris data. Plant correspondences follow E.M. Kranich's <em>Planetary Influences Upon Plants</em> and Lawrence Edwards' path-curve research.
+    </p>
+    <a href="index.html" class="nav-link">← Orbital Period Simulator</a>
+  </div>
+
+</div>
+
+<script>
+let currentView = 'mercury';
+let animTime = 0;
+
+const EARTH_SIDEREAL = 365.256;
+const MERCURY_SIDEREAL = 87.969;
+const VENUS_SIDEREAL = 224.701;
+const MERCURY_AU = 0.387;
+const VENUS_AU = 0.723;
+const EARTH_AU = 1.0;
+
+const omega_E = (2 * Math.PI) / EARTH_SIDEREAL;
+const omega_M = (2 * Math.PI) / MERCURY_SIDEREAL;
+const omega_V = (2 * Math.PI) / VENUS_SIDEREAL;
+
+const viewSelect = document.getElementById('view-select');
+viewSelect.addEventListener('change', e => {
+  currentView = e.target.value;
+  document.querySelectorAll('.correspondence').forEach(el => el.style.display = 'none');
+  document.getElementById('info-' + currentView).style.display = '';
+  const keys = ['mercury','venus','archetype','buds','phyllotaxis','seasons'];
+  keys.forEach(k => {
+    const el = document.getElementById('key-' + k);
+    if (el) el.style.display = k === currentView ? '' : 'none';
+  });
+  animTime = 0;
+});
+
+const canvasWrap = document.getElementById('canvas-wrap');
+
+new p5(p => {
+  let cw, ch;
+
+  p.setup = () => {
+    const r = canvasWrap.getBoundingClientRect();
+    cw = r.width; ch = r.height;
+    p.createCanvas(cw, ch).parent(canvasWrap);
+    p.textFont('EB Garamond, Georgia, serif');
+  };
+
+  p.windowResized = () => {
+    const r = canvasWrap.getBoundingClientRect();
+    cw = r.width; ch = r.height;
+    p.resizeCanvas(cw, ch);
+  };
+
+  p.draw = () => {
+    p.background(207, 218, 228);
+    animTime += 0.6;
+    const cx = cw / 2, cy = ch / 2;
+    const maxR = Math.min(cw, ch) * 0.40;
+
+    if (currentView === 'mercury') drawMercuryRose(cx, cy, maxR);
+    else if (currentView === 'venus') drawVenusRose(cx, cy, maxR);
+    else if (currentView === 'archetype') drawArchetype(cx, cy, maxR);
+    else if (currentView === 'buds') drawBuds(cx, cy, maxR);
+    else if (currentView === 'phyllotaxis') drawPhyllotaxis(cx, cy, maxR);
+    else if (currentView === 'seasons') drawSeasons(cx, cy, maxR);
+  };
+
+  // --- MERCURY: 3-lobed geocentric rose → monocot ---
+  function drawMercuryRose(cx, cy, maxR) {
+    const totalDays = Math.min(animTime * 2, 365.256);
+    const scale = maxR * 0.55;
+
+    // Faint orbit circles for reference
+    p.noFill(); p.strokeWeight(0.5);
+    p.stroke(150, 140, 120, 30);
+    p.ellipse(cx, cy, MERCURY_AU * scale * 2, MERCURY_AU * scale * 2);
+    p.ellipse(cx, cy, EARTH_AU * scale * 2, EARTH_AU * scale * 2);
+
+    // Geocentric trace
+    p.noFill(); p.strokeWeight(1.5);
+    p.beginShape();
+    for (let t = 0; t < totalDays; t += 0.3) {
+      const gx = MERCURY_AU * Math.cos(omega_M * t) - EARTH_AU * Math.cos(omega_E * t);
+      const gy = MERCURY_AU * Math.sin(omega_M * t) - EARTH_AU * Math.sin(omega_E * t);
+      const frac = t / 365.256;
+      p.stroke(122, 156, 186, 120 + frac * 80);
+      p.vertex(cx + gx * scale, cy + gy * scale);
+    }
+    p.endShape();
+
+    // Mark inferior conjunctions (when Mercury passes between Earth and Sun)
+    const conjunctions = [];
+    let prevDiff = 0;
+    for (let t = 1; t < totalDays; t += 0.1) {
+      const diff = ((omega_M * t - omega_E * t) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      if (prevDiff > 5.5 && diff < 1) {
+        conjunctions.push(t);
+      }
+      prevDiff = diff;
+    }
+
+    conjunctions.forEach((t, i) => {
+      const gx = MERCURY_AU * Math.cos(omega_M * t) - EARTH_AU * Math.cos(omega_E * t);
+      const gy = MERCURY_AU * Math.sin(omega_M * t) - EARTH_AU * Math.sin(omega_E * t);
+      const sx = cx + gx * scale, sy = cy + gy * scale;
+      p.noStroke(); p.fill(130, 110, 70, 120);
+      p.ellipse(sx, sy, 8, 8);
+      p.fill(130, 110, 70, 60);
+      p.ellipse(sx, sy, 16, 16);
+    });
+
+    // Earth at center
+    const eBreathe = 1 + Math.sin(p.frameCount * 0.015) * 0.06;
+    p.noStroke();
+    p.fill(120, 175, 210, 6); p.ellipse(cx, cy, 32 * eBreathe, 32 * eBreathe);
+    p.fill(74, 138, 92, 20); p.ellipse(cx, cy, 18, 18);
+    p.fill(74, 138, 92); p.ellipse(cx, cy, 8, 8);
+    p.fill(50, 100, 65, 200); p.textSize(12); p.textAlign(p.CENTER, p.TOP);
+    p.text('⊕', cx, cy + 12);
+
+    // 3-fold symmetry label
+    if (totalDays > 300) {
+      p.fill(100, 90, 70, 140); p.textSize(14); p.textAlign(p.CENTER, p.CENTER);
+      p.text('3-fold symmetry', cx, cy - maxR * 0.85);
+      p.textSize(12); p.fill(100, 90, 70, 80);
+      p.text(conjunctions.length + ' inferior conjunctions / year', cx, cy - maxR * 0.85 + 20);
+    }
+
+    // Draw monocot flower in lower right
+    if (totalDays > 200) {
+      const flowerAlpha = Math.min(1, (totalDays - 200) / 100);
+      drawMonocotFlower(cx + maxR * 0.65, cy + maxR * 0.6, maxR * 0.22, flowerAlpha);
+    }
+  }
+
+  function drawMonocotFlower(fx, fy, r, alpha) {
+    const a = alpha * 255;
+    // Three petals at 120° intervals
+    for (let i = 0; i < 3; i++) {
+      const angle = (i * 120 - 90) * Math.PI / 180;
+      p.noFill(); p.stroke(160, 100, 72, a * 0.6); p.strokeWeight(1.2);
+      p.beginShape();
+      const petalLen = r;
+      const petalW = r * 0.35;
+      const tipX = fx + Math.cos(angle) * petalLen;
+      const tipY = fy + Math.sin(angle) * petalLen;
+      const perpX = Math.cos(angle + Math.PI / 2);
+      const perpY = Math.sin(angle + Math.PI / 2);
+      p.vertex(fx, fy);
+      p.bezierVertex(
+        fx + Math.cos(angle) * petalLen * 0.3 + perpX * petalW,
+        fy + Math.sin(angle) * petalLen * 0.3 + perpY * petalW,
+        fx + Math.cos(angle) * petalLen * 0.7 + perpX * petalW * 0.6,
+        fy + Math.sin(angle) * petalLen * 0.7 + perpY * petalW * 0.6,
+        tipX, tipY
+      );
+      p.endShape();
+      p.beginShape();
+      p.vertex(fx, fy);
+      p.bezierVertex(
+        fx + Math.cos(angle) * petalLen * 0.3 - perpX * petalW,
+        fy + Math.sin(angle) * petalLen * 0.3 - perpY * petalW,
+        fx + Math.cos(angle) * petalLen * 0.7 - perpX * petalW * 0.6,
+        fy + Math.sin(angle) * petalLen * 0.7 - perpY * petalW * 0.6,
+        tipX, tipY
+      );
+      p.endShape();
+      // Center vein
+      p.stroke(160, 100, 72, a * 0.3); p.strokeWeight(0.5);
+      p.line(fx, fy, tipX, tipY);
+    }
+    // Three inner sepals (offset 60°)
+    for (let i = 0; i < 3; i++) {
+      const angle = (i * 120 - 90 + 60) * Math.PI / 180;
+      p.noFill(); p.stroke(140, 120, 80, a * 0.3); p.strokeWeight(0.8);
+      const petalLen = r * 0.7;
+      const petalW = r * 0.2;
+      const tipX = fx + Math.cos(angle) * petalLen;
+      const tipY = fy + Math.sin(angle) * petalLen;
+      const perpX = Math.cos(angle + Math.PI / 2);
+      const perpY = Math.sin(angle + Math.PI / 2);
+      p.beginShape();
+      p.vertex(fx, fy);
+      p.bezierVertex(
+        fx + Math.cos(angle) * petalLen * 0.4 + perpX * petalW,
+        fy + Math.sin(angle) * petalLen * 0.4 + perpY * petalW,
+        fx + Math.cos(angle) * petalLen * 0.7 + perpX * petalW * 0.5,
+        fy + Math.sin(angle) * petalLen * 0.7 + perpY * petalW * 0.5,
+        tipX, tipY
+      );
+      p.endShape();
+      p.beginShape();
+      p.vertex(fx, fy);
+      p.bezierVertex(
+        fx + Math.cos(angle) * petalLen * 0.4 - perpX * petalW,
+        fy + Math.sin(angle) * petalLen * 0.4 - perpY * petalW,
+        fx + Math.cos(angle) * petalLen * 0.7 - perpX * petalW * 0.5,
+        fy + Math.sin(angle) * petalLen * 0.7 - perpY * petalW * 0.5,
+        tipX, tipY
+      );
+      p.endShape();
+    }
+    // Center
+    p.noStroke(); p.fill(130, 110, 70, a * 0.5);
+    p.ellipse(fx, fy, 5, 5);
+    // Label
+    p.fill(120, 95, 60, a * 0.7); p.textSize(13); p.textAlign(p.CENTER, p.TOP);
+    p.text('Monocot — 3 petals', fx, fy + r + 10);
+  }
+
+  // --- VENUS: 5-petaled geocentric rose → dicot ---
+  function drawVenusRose(cx, cy, maxR) {
+    const totalDays = Math.min(animTime * 4, 2922);
+    const scale = maxR * 0.32;
+
+    // Faint orbit circles
+    p.noFill(); p.strokeWeight(0.5);
+    p.stroke(150, 140, 120, 25);
+    p.ellipse(cx, cy, VENUS_AU * scale * 2, VENUS_AU * scale * 2);
+    p.ellipse(cx, cy, EARTH_AU * scale * 2, EARTH_AU * scale * 2);
+
+    // Geocentric trace
+    p.noFill(); p.strokeWeight(1.2);
+    p.beginShape();
+    for (let t = 0; t < totalDays; t += 0.5) {
+      const gx = VENUS_AU * Math.cos(omega_V * t) - EARTH_AU * Math.cos(omega_E * t);
+      const gy = VENUS_AU * Math.sin(omega_V * t) - EARTH_AU * Math.sin(omega_E * t);
+      const frac = t / 2922;
+      p.stroke(196, 160, 80, 100 + frac * 100);
+      p.vertex(cx + gx * scale, cy + gy * scale);
+    }
+    p.endShape();
+
+    // Mark inferior conjunctions
+    const conjunctions = [];
+    let prevDiff = 0;
+    for (let t = 1; t < totalDays; t += 0.2) {
+      const diff = ((omega_V * t - omega_E * t) % (2 * Math.PI) + 4 * Math.PI) % (2 * Math.PI);
+      if (prevDiff > 5.5 && diff < 1) {
+        conjunctions.push(t);
+      }
+      prevDiff = diff;
+    }
+
+    // Draw pentagram connecting conjunctions
+    if (conjunctions.length >= 2) {
+      p.stroke(130, 110, 70, 30); p.strokeWeight(0.8);
+      for (let i = 0; i < conjunctions.length; i++) {
+        for (let j = i + 1; j < conjunctions.length; j++) {
+          const t1 = conjunctions[i], t2 = conjunctions[j];
+          const g1x = VENUS_AU * Math.cos(omega_V * t1) - EARTH_AU * Math.cos(omega_E * t1);
+          const g1y = VENUS_AU * Math.sin(omega_V * t1) - EARTH_AU * Math.sin(omega_E * t1);
+          const g2x = VENUS_AU * Math.cos(omega_V * t2) - EARTH_AU * Math.cos(omega_E * t2);
+          const g2y = VENUS_AU * Math.sin(omega_V * t2) - EARTH_AU * Math.sin(omega_E * t2);
+          p.line(cx + g1x * scale, cy + g1y * scale, cx + g2x * scale, cy + g2y * scale);
+        }
+      }
+    }
+
+    conjunctions.forEach((t, i) => {
+      const gx = VENUS_AU * Math.cos(omega_V * t) - EARTH_AU * Math.cos(omega_E * t);
+      const gy = VENUS_AU * Math.sin(omega_V * t) - EARTH_AU * Math.sin(omega_E * t);
+      const sx = cx + gx * scale, sy = cy + gy * scale;
+      p.noStroke(); p.fill(130, 110, 70, 150);
+      p.ellipse(sx, sy, 7, 7);
+      p.fill(130, 110, 70, 40);
+      p.ellipse(sx, sy, 18, 18);
+    });
+
+    // Earth at center
+    const eBreathe = 1 + Math.sin(p.frameCount * 0.015) * 0.06;
+    p.noStroke();
+    p.fill(120, 175, 210, 6); p.ellipse(cx, cy, 32 * eBreathe, 32 * eBreathe);
+    p.fill(74, 138, 92, 20); p.ellipse(cx, cy, 18, 18);
+    p.fill(74, 138, 92); p.ellipse(cx, cy, 8, 8);
+    p.fill(50, 100, 65, 200); p.textSize(12); p.textAlign(p.CENTER, p.TOP);
+    p.text('⊕', cx, cy + 12);
+
+    // Labels
+    const yearsDone = totalDays / 365.256;
+    p.fill(100, 90, 70, 140); p.textSize(14); p.textAlign(p.CENTER, p.CENTER);
+    p.text('5-fold symmetry', cx, cy - maxR * 0.88);
+    p.textSize(12); p.fill(100, 90, 70, 80);
+    p.text(yearsDone.toFixed(1) + ' years — ' + conjunctions.length + ' conjunctions', cx, cy - maxR * 0.88 + 20);
+    if (conjunctions.length >= 2) {
+      p.text('8 : 5 : 13  (Fibonacci)', cx, cy - maxR * 0.88 + 36);
+    }
+
+    // Draw dicot flower in lower right
+    if (totalDays > 800) {
+      const flowerAlpha = Math.min(1, (totalDays - 800) / 400);
+      drawDicotFlower(cx + maxR * 0.65, cy + maxR * 0.6, maxR * 0.2, flowerAlpha);
+    }
+  }
+
+  function drawDicotFlower(fx, fy, r, alpha) {
+    const a = alpha * 255;
+    // Five petals at 72° intervals
+    for (let i = 0; i < 5; i++) {
+      const angle = (i * 72 - 90) * Math.PI / 180;
+      p.noFill(); p.stroke(192, 96, 112, a * 0.6); p.strokeWeight(1.2);
+      const petalLen = r;
+      const petalW = r * 0.32;
+      const tipX = fx + Math.cos(angle) * petalLen;
+      const tipY = fy + Math.sin(angle) * petalLen;
+      const perpX = Math.cos(angle + Math.PI / 2);
+      const perpY = Math.sin(angle + Math.PI / 2);
+      p.beginShape();
+      p.vertex(fx, fy);
+      p.bezierVertex(
+        fx + Math.cos(angle) * petalLen * 0.25 + perpX * petalW,
+        fy + Math.sin(angle) * petalLen * 0.25 + perpY * petalW,
+        fx + Math.cos(angle) * petalLen * 0.65 + perpX * petalW * 0.8,
+        fy + Math.sin(angle) * petalLen * 0.65 + perpY * petalW * 0.8,
+        tipX, tipY
+      );
+      p.endShape();
+      p.beginShape();
+      p.vertex(fx, fy);
+      p.bezierVertex(
+        fx + Math.cos(angle) * petalLen * 0.25 - perpX * petalW,
+        fy + Math.sin(angle) * petalLen * 0.25 - perpY * petalW,
+        fx + Math.cos(angle) * petalLen * 0.65 - perpX * petalW * 0.8,
+        fy + Math.sin(angle) * petalLen * 0.65 - perpY * petalW * 0.8,
+        tipX, tipY
+      );
+      p.endShape();
+      p.stroke(192, 96, 112, a * 0.25); p.strokeWeight(0.5);
+      p.line(fx, fy, tipX, tipY);
+    }
+    p.noStroke(); p.fill(180, 150, 70, a * 0.5);
+    p.ellipse(fx, fy, 5, 5);
+    p.fill(150, 80, 90, a * 0.7); p.textSize(13); p.textAlign(p.CENTER, p.TOP);
+    p.text('Dicot — 5 petals', fx, fy + r + 10);
+  }
+
+  // --- ARCHETYPAL PLANT ---
+  function drawArchetype(cx, cy, maxR) {
+    const plantH = maxR * 1.6;
+    const baseY = cy + plantH * 0.3;
+    const topY = cy - plantH * 0.5;
+    const growT = Math.min(1, animTime * 0.008);
+
+    // Ground line
+    p.stroke(130, 115, 85, 60); p.strokeWeight(0.8);
+    const groundY = cy + plantH * 0.05;
+    p.line(cx - maxR * 0.8, groundY, cx + maxR * 0.8, groundY);
+    p.noStroke(); p.fill(130, 115, 85, 30);
+    p.textSize(11); p.textAlign(p.LEFT, p.CENTER);
+    p.text('earth', cx + maxR * 0.82, groundY);
+
+    // ROOT — Moon ☽
+    if (growT > 0) {
+      const rootDepth = growT * plantH * 0.25;
+      p.stroke(135, 120, 90, 100); p.strokeWeight(1.5);
+      p.line(cx, groundY, cx, groundY + rootDepth);
+      // Branching roots
+      const rootBranches = [[0.3, -0.6], [0.5, 0.5], [0.7, -0.4], [0.4, 0.7]];
+      rootBranches.forEach(([t, dir]) => {
+        const ry = groundY + rootDepth * t;
+        const rLen = rootDepth * 0.3 * (1 - t * 0.5);
+        p.strokeWeight(0.8);
+        p.stroke(135, 120, 90, 70);
+        const endX = cx + dir * rLen;
+        const endY = ry + rLen * 0.5;
+        p.line(cx, ry, endX, endY);
+        p.strokeWeight(0.4);
+        p.line(endX, endY, endX + dir * rLen * 0.4, endY + rLen * 0.3);
+      });
+      // Moon label
+      p.noStroke(); p.fill(120, 110, 90, 120);
+      p.textSize(16); p.textAlign(p.RIGHT, p.CENTER);
+      p.text('☽', cx - maxR * 0.25, groundY + rootDepth * 0.5);
+      p.textSize(11); p.fill(120, 110, 90, 80);
+      p.text('Moon', cx - maxR * 0.25, groundY + rootDepth * 0.5 + 16);
+    }
+
+    // STEM — Sun ☉
+    if (growT > 0.1) {
+      const stemGrow = Math.min(1, (growT - 0.1) / 0.4);
+      const stemTop = groundY - stemGrow * plantH * 0.55;
+      p.stroke(90, 125, 70, 120); p.strokeWeight(2);
+      p.line(cx, groundY, cx, stemTop);
+      // Sun label
+      p.noStroke(); p.fill(200, 146, 42, 140);
+      p.textSize(16); p.textAlign(p.LEFT, p.CENTER);
+      p.text('☉', cx + maxR * 0.25, (groundY + stemTop) / 2);
+      p.textSize(11); p.fill(200, 146, 42, 100);
+      p.text('Sun', cx + maxR * 0.25, (groundY + stemTop) / 2 + 16);
+
+      // LEAVES — Mercury ☿ (3-fold arrangement hints)
+      if (growT > 0.3) {
+        const leafGrow = Math.min(1, (growT - 0.3) / 0.3);
+        const numLeaves = Math.floor(leafGrow * 8);
+        for (let i = 0; i < numLeaves; i++) {
+          const t = (i + 1) / 9;
+          const ly = groundY - t * plantH * 0.5;
+          const side = (i % 2 === 0) ? 1 : -1;
+          const leafLen = maxR * 0.18 * (1 - t * 0.4);
+          p.noFill(); p.stroke(80, 120, 60, 90); p.strokeWeight(0.8);
+          p.beginShape();
+          p.vertex(cx, ly);
+          p.bezierVertex(cx + side * leafLen * 0.3, ly - leafLen * 0.15,
+            cx + side * leafLen * 0.8, ly - leafLen * 0.05,
+            cx + side * leafLen, ly + leafLen * 0.05);
+          p.endShape();
+          p.beginShape();
+          p.vertex(cx, ly);
+          p.bezierVertex(cx + side * leafLen * 0.3, ly + leafLen * 0.1,
+            cx + side * leafLen * 0.8, ly + leafLen * 0.08,
+            cx + side * leafLen, ly + leafLen * 0.05);
+          p.endShape();
+        }
+        // Mercury label
+        if (numLeaves > 3) {
+          p.noStroke(); p.fill(100, 130, 160, 120);
+          p.textSize(16); p.textAlign(p.RIGHT, p.CENTER);
+          const labelY = groundY - plantH * 0.25;
+          p.text('☿', cx - maxR * 0.28, labelY);
+          p.textSize(11); p.fill(100, 130, 160, 80);
+          p.text('Mercury', cx - maxR * 0.28, labelY + 16);
+        }
+      }
+
+      // FLOWER — Venus ♀
+      if (growT > 0.6) {
+        const flowerGrow = Math.min(1, (growT - 0.6) / 0.2);
+        const flowerY = stemTop;
+        const flowerR = maxR * 0.1 * flowerGrow;
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * 72 - 90) * Math.PI / 180;
+          const px = cx + Math.cos(angle) * flowerR;
+          const py = flowerY + Math.sin(angle) * flowerR;
+          p.noFill(); p.stroke(180, 120, 90, 100 * flowerGrow); p.strokeWeight(0.8);
+          p.ellipse(px, py, flowerR * 0.6, flowerR * 0.9);
+        }
+        p.noStroke(); p.fill(200, 160, 60, 100 * flowerGrow);
+        p.ellipse(cx, flowerY, 5, 5);
+        // Venus label
+        p.fill(180, 140, 60, 120 * flowerGrow);
+        p.textSize(16); p.textAlign(p.LEFT, p.CENTER);
+        p.text('♀', cx + maxR * 0.18, flowerY);
+        p.textSize(11); p.fill(180, 140, 60, 80 * flowerGrow);
+        p.text('Venus', cx + maxR * 0.18, flowerY + 16);
+      }
+
+      // SEED indicator — Saturn ♄
+      if (growT > 0.85) {
+        const seedAlpha = Math.min(1, (growT - 0.85) / 0.15);
+        p.noStroke(); p.fill(100, 90, 75, 100 * seedAlpha);
+        p.ellipse(cx, groundY + 8, 6, 8);
+        p.fill(100, 90, 75, 120 * seedAlpha);
+        p.textSize(16); p.textAlign(p.RIGHT, p.CENTER);
+        p.text('♄', cx - maxR * 0.15, groundY + 8);
+        p.textSize(11); p.fill(100, 90, 75, 70 * seedAlpha);
+        p.text('Saturn', cx - maxR * 0.15, groundY + 24);
+      }
+    }
+  }
+
+  // --- BUD PATH-CURVES (Edwards' projective geometry) ---
+  function drawBuds(cx, cy, maxR) {
+    // Path-curve profile: width = w * (1 - t²)^λ
+    // λ controls pointedness — low λ = rounded, high λ = pointed
+    // Edwards found λ oscillates with Moon-planet synodic cycles
+    const lambda = 0.55 + Math.sin(animTime * 0.004) * 0.3;
+    const budH = maxR * 0.8;
+    const budW = maxR * 0.28;
+
+    function budOutline(lam, ww) {
+      const pts = [];
+      for (let t = -1; t <= 1; t += 0.012) {
+        const y = cy + t * budH * 0.5;
+        const x = ww * Math.pow(Math.max(0.001, 1 - t * t), lam);
+        pts.push({ x: cx + x, y });
+      }
+      for (let t = 1; t >= -1; t -= 0.012) {
+        const y = cy + t * budH * 0.5;
+        const x = ww * Math.pow(Math.max(0.001, 1 - t * t), lam);
+        pts.push({ x: cx - x, y });
+      }
+      return pts;
+    }
+
+    // Ghost outlines showing the λ range
+    p.noFill();
+    const ghostLambdas = [0.3, 0.45, 0.65, 0.8];
+    ghostLambdas.forEach(lam => {
+      if (Math.abs(lam - lambda) < 0.08) return;
+      const pts = budOutline(lam, budW);
+      p.stroke(130, 105, 70, 18); p.strokeWeight(0.5);
+      p.beginShape();
+      pts.forEach(pt => p.vertex(pt.x, pt.y));
+      p.endShape(p.CLOSE);
+    });
+
+    // Active bud — closed shape
+    const activePts = budOutline(lambda, budW);
+    p.noFill(); p.stroke(130, 100, 60, 170); p.strokeWeight(1.8);
+    p.beginShape();
+    activePts.forEach(pt => p.vertex(pt.x, pt.y));
+    p.endShape(p.CLOSE);
+
+    // Internal vein curves (symmetrical pairs)
+    p.stroke(130, 105, 70, 30); p.strokeWeight(0.4);
+    for (let i = 1; i <= 4; i++) {
+      const f = i * 0.18;
+      const innerW = budW * f;
+      p.beginShape();
+      for (let t = -0.9; t <= 0.9; t += 0.02) {
+        const y = cy + t * budH * 0.5;
+        const x = innerW * Math.pow(Math.max(0.001, 1 - t * t), lambda * 1.1);
+        p.vertex(cx + x, y);
+      }
+      p.endShape();
+      p.beginShape();
+      for (let t = -0.9; t <= 0.9; t += 0.02) {
+        const y = cy + t * budH * 0.5;
+        const x = innerW * Math.pow(Math.max(0.001, 1 - t * t), lambda * 1.1);
+        p.vertex(cx - x, y);
+      }
+      p.endShape();
+    }
+    // Center vein
+    p.stroke(130, 105, 70, 40); p.strokeWeight(0.6);
+    p.line(cx, cy - budH * 0.48, cx, cy + budH * 0.48);
+
+    // λ display
+    p.noStroke(); p.fill(110, 90, 55, 200);
+    p.textSize(22); p.textAlign(p.CENTER, p.CENTER);
+    p.text('λ = ' + lambda.toFixed(2), cx, cy + budH * 0.55);
+    p.textSize(12); p.fill(110, 90, 55, 90);
+    p.text('projective path-curve parameter', cx, cy + budH * 0.55 + 20);
+    p.textSize(11); p.fill(110, 90, 55, 60);
+    const shapeLabel = lambda < 0.4 ? 'rounded (expanded)' : lambda > 0.7 ? 'pointed (contracted)' : 'intermediate';
+    p.text(shapeLabel, cx, cy + budH * 0.55 + 36);
+
+    // Moon-planet synodic cycle bar
+    const cyclePos = (animTime * 0.004) % (Math.PI * 2);
+    const barY = cy + budH * 0.75;
+    const barW = maxR * 0.55;
+    p.stroke(130, 110, 70, 30); p.strokeWeight(0.5);
+    p.line(cx - barW, barY, cx + barW, barY);
+    [-1, 0, 1].forEach(pos => {
+      p.line(cx + pos * barW, barY - 4, cx + pos * barW, barY + 4);
+    });
+    const dotX = cx + Math.cos(cyclePos) * barW;
+    p.noStroke(); p.fill(130, 100, 60, 150);
+    p.ellipse(dotX, barY, 7, 7);
+    p.textSize(10); p.textAlign(p.CENTER, p.TOP);
+    p.fill(110, 95, 65, 90);
+    p.text('☽–♂ conjunction', cx - barW, barY + 8);
+    p.text('opposition', cx, barY + 8);
+    p.text('conjunction', cx + barW, barY + 8);
+    p.textSize(11); p.fill(110, 95, 65, 50);
+    p.text('780-day cycle (oak buds)', cx, barY + 24);
+  }
+
+  // --- PHYLLOTAXIS ---
+  function drawPhyllotaxis(cx, cy, maxR) {
+    const goldenAngle = 137.508;
+    const numPoints = Math.min(350, Math.floor(animTime * 0.5));
+
+    for (let i = 0; i < numPoints; i++) {
+      const angle = i * goldenAngle * (Math.PI / 180);
+      const r = Math.sqrt(i) * maxR * 0.05;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      const size = 2.5 + (i / 350) * 5;
+      const age = i / 350;
+
+      p.noStroke();
+      p.fill(
+        p.lerp(75, 165, age),
+        p.lerp(115, 135, age),
+        p.lerp(55, 75, age),
+        p.lerp(210, 100, age)
+      );
+      p.ellipse(x, y, size, size);
+    }
+
+    // Golden angle arc
+    if (numPoints > 20) {
+      p.noFill(); p.strokeWeight(1);
+      const arcR = maxR * 0.28;
+      p.stroke(140, 110, 50, 50);
+      p.arc(cx, cy, arcR * 2, arcR * 2, 0, goldenAngle * Math.PI / 180);
+      p.stroke(140, 110, 50, 30);
+      p.line(cx, cy, cx + arcR, cy);
+      const endA = goldenAngle * Math.PI / 180;
+      p.line(cx, cy, cx + arcR * Math.cos(endA), cy + arcR * Math.sin(endA));
+
+      p.noStroke(); p.fill(110, 90, 55, 180);
+      p.textSize(18); p.textAlign(p.CENTER, p.CENTER);
+      p.text('137.508°', cx, cy - arcR - 22);
+      p.textSize(12); p.fill(110, 90, 55, 100);
+      p.text('360° / φ²', cx, cy - arcR - 6);
+    }
+
+    // Fibonacci spiral overlay
+    p.noFill(); p.strokeWeight(0.5);
+    const fibs = [1, 1, 2, 3, 5, 8, 13, 21];
+    for (let s = 0; s < 2; s++) {
+      p.stroke(100, 85, 55, 20);
+      let a = s === 0 ? 0 : Math.PI;
+      for (let i = 0; i < fibs.length; i++) {
+        const r = fibs[i] * maxR * 0.032;
+        p.arc(cx, cy, r * 2, r * 2, a, a + Math.PI);
+        a += Math.PI;
+      }
+    }
+  }
+
+  // --- SEASONAL CHEMISTRY ---
+  function drawSeasons(cx, cy, maxR) {
+    const orbitR = maxR * 0.55;
+
+    // Orbit ring
+    p.noFill(); p.stroke(140, 125, 100, 45); p.strokeWeight(1.2);
+    p.ellipse(cx, cy, orbitR * 2, orbitR * 2);
+
+    // Sun at center
+    const sp = 8 + Math.sin(p.frameCount * 0.02) * 0.8;
+    p.noStroke();
+    p.fill(200, 146, 42, 8); p.ellipse(cx, cy, sp * 4, sp * 4);
+    p.fill(200, 146, 42, 25); p.ellipse(cx, cy, sp * 2.5, sp * 2.5);
+    p.fill(200, 146, 42); p.ellipse(cx, cy, sp, sp);
+
+    // Seasonal color sectors with pigment info
+    const seasons = [
+      { name: 'Spring', sub: 'chlorophyll rising', angle: -90, color: [100, 160, 80] },
+      { name: 'Summer', sub: 'peak chlorophyll', angle: 0, color: [55, 130, 50] },
+      { name: 'Autumn', sub: 'carotene + anthocyanin', angle: 90, color: [190, 120, 50] },
+      { name: 'Winter', sub: 'dormancy', angle: 180, color: [110, 100, 85] },
+    ];
+
+    seasons.forEach(s => {
+      const a = p.radians(s.angle);
+      const x = cx + orbitR * Math.cos(a);
+      const y = cy + orbitR * Math.sin(a);
+
+      p.noStroke();
+      p.fill(s.color[0], s.color[1], s.color[2], 30);
+      p.ellipse(x, y, 44, 44);
+      p.fill(s.color[0], s.color[1], s.color[2], 130);
+      p.ellipse(x, y, 12, 12);
+
+      const labelR = orbitR + 32;
+      p.fill(s.color[0] * 0.55, s.color[1] * 0.55, s.color[2] * 0.55, 180);
+      p.textSize(14); p.textAlign(p.CENTER, p.CENTER);
+      p.text(s.name, cx + labelR * Math.cos(a), cy + labelR * Math.sin(a));
+      p.textSize(10); p.fill(s.color[0] * 0.6, s.color[1] * 0.6, s.color[2] * 0.6, 100);
+      p.text(s.sub, cx + (labelR + 16) * Math.cos(a), cy + (labelR + 16) * Math.sin(a));
+    });
+
+    // Pigment gradient bar
+    const barY = cy + maxR * 0.82;
+    const barW = maxR * 0.7;
+    for (let x = -barW; x < barW; x += 2) {
+      const t = (x + barW) / (barW * 2);
+      let r, g, b;
+      if (t < 0.5) {
+        r = p.lerp(55, 200, t * 2);
+        g = p.lerp(130, 160, t * 2);
+        b = p.lerp(50, 40, t * 2);
+      } else {
+        r = p.lerp(200, 150, (t - 0.5) * 2);
+        g = p.lerp(160, 40, (t - 0.5) * 2);
+        b = p.lerp(40, 65, (t - 0.5) * 2);
+      }
+      p.noStroke(); p.fill(r, g, b, 110);
+      p.rect(cx + x, barY, 3, 8);
+    }
+    p.fill(100, 90, 70, 110); p.textSize(11); p.textAlign(p.CENTER, p.TOP);
+    p.text('chlorophyll → carotene → anthocyanin', cx, barY + 14);
+
+    // Earth orbital position
+    const earthAngle = animTime * 0.003;
+    const ex = cx + orbitR * Math.cos(earthAngle);
+    const ey = cy + orbitR * Math.sin(earthAngle);
+    const eBreathe = 1 + Math.sin(p.frameCount * 0.015) * 0.06;
+    p.noStroke();
+    p.fill(120, 175, 210, 6); p.ellipse(ex, ey, 24 * eBreathe, 24 * eBreathe);
+    p.fill(74, 138, 92, 25); p.ellipse(ex, ey, 14, 14);
+    p.fill(74, 138, 92); p.ellipse(ex, ey, 7, 7);
+    p.fill(50, 100, 65, 150); p.textSize(11); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text('⊕', ex, ey - 10);
+  }
+});
+</script>
+</body>
+</html>

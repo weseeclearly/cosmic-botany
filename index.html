@@ -13,7 +13,7 @@
   :root{
     --bg:#efecea;--panel:#f6f4f1;--border:#d4cfc6;
     --text:#2c2824;--dim:#7a7268;--accent:#8a6e2e;
-    --sun:#c8922a;--earth:#3d6a8c;--target:#a04858;
+    --sun:#c8922a;--earth:#4a8a5c;--target:#a04858;
     --sidereal:#3a6b4c;--synodic:#5a4a85;
     --canvas-bg:#cfdae4;
     --radius:4px;
@@ -98,17 +98,25 @@
   .explainer p{font-size:13px;color:var(--dim);line-height:1.6;margin-top:6px}
   .explainer em{font-style:italic;color:var(--text)}
 
+  .nav-link{font-size:13px;color:var(--accent);text-decoration:none;letter-spacing:.5px;padding-top:10px;border-top:1px solid var(--border);display:block}
+  .nav-link:hover{text-decoration:underline}
+
   @media(max-width:900px){
-    #app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+    html,body{overflow:auto}
+    #app{grid-template-columns:1fr;grid-template-rows:auto minmax(50vh,1fr) auto;height:auto;min-height:100%}
     .panel{border:none !important;padding:14px 16px;gap:10px}
     .panel.left{border-bottom:1px solid var(--border) !important;flex-direction:row;flex-wrap:wrap;align-items:flex-end}
     .panel.left>*{flex:1;min-width:110px}
     .panel.left h2{flex-basis:100%}
+    .panel.left .ref-table{display:none}
+    .panel.left .info-note{display:none}
+    .panel.left .nav-link{display:none}
     .panel.right{border-top:1px solid var(--border) !important;flex-direction:row;flex-wrap:wrap;align-items:flex-start}
     .panel.right h2{flex-basis:100%}
     .panel.right>*{flex:1;min-width:130px}
     .panel.right .legend{flex-basis:100%;flex-direction:row;gap:14px}
-    .panel.right .info-note{flex-basis:100%}
+    .panel.right .explainer{display:none}
+    #canvas-wrap{min-height:50vh}
     .data-block .value{font-size:20px}
   }
   @media(max-width:500px){
@@ -144,8 +152,8 @@
     </div>
     <div>
       <label for="speed-slider">Speed</label>
-      <input type="range" id="speed-slider" min="0" max="100" value="20">
-      <div class="speed-val" id="speed-display">1×</div>
+      <input type="range" id="speed-slider" min="0" max="100" value="58">
+      <div class="speed-val" id="speed-display">20.9×</div>
     </div>
     <div class="ref-table">
       <label>Reference — Earth Days</label>
@@ -221,6 +229,8 @@
       <p>The <em>synodic period</em> completes when Earth and the target planet realign with the Sun. The closing wedge shows this angular gap shrinking to zero.</p>
       <p>Outer planets have shorter synodic periods because Earth catches up quickly. Inner planets have longer synodic periods because the gap closes slowly.</p>
     </div>
+
+    <a href="botany.html" class="nav-link">Cosmic Botany →</a>
   </div>
 
 </div>
@@ -247,16 +257,15 @@ let playing = false;
 let elapsedDays = 0;
 let earthAngle = 0;
 let targetAngle = 0;
-let siderealReached = false;
-let synodicReached = false;
-let siderealDay = 0;
-let synodicDay = 0;
+let siderealCount = 0;
+let synodicCount = 0;
 let siderealFlashTimer = 0;
 let synodicFlashTimer = 0;
 let prevRelAngle = 0;
 let prevTargetAngle = 0;
-let siderealSnapshot = null;
-let synodicSnapshot = null;
+
+const events = [];
+let eventIdx = -1;
 
 const earthTrail = [];
 const targetTrail = [];
@@ -268,35 +277,93 @@ function getSpeed(sliderVal) {
   return Math.pow(10, (sliderVal / 100) * 4 - 1);
 }
 
+function recordEvent(type, day) {
+  events.push({ type, day, earthAngle, targetAngle });
+  eventIdx = events.length - 1;
+}
+
+function jumpToEvent(idx) {
+  if (idx < 0) {
+    earthAngle = 0; targetAngle = 0; elapsedDays = 0;
+    prevRelAngle = 0; prevTargetAngle = 0;
+    siderealCount = 0; synodicCount = 0;
+    eventIdx = -1;
+  } else if (idx < events.length) {
+    const ev = events[idx];
+    earthAngle = ev.earthAngle;
+    targetAngle = ev.targetAngle;
+    elapsedDays = ev.day;
+    eventIdx = idx;
+    siderealCount = 0; synodicCount = 0;
+    for (let i = 0; i <= idx; i++) {
+      if (events[i].type === 'sidereal') siderealCount++;
+      else synodicCount++;
+    }
+    if (ev.type === 'sidereal') siderealFlashTimer = 180;
+    else synodicFlashTimer = 240;
+  }
+  playing = false;
+  earthTrail.length = 0;
+  targetTrail.length = 0;
+  document.getElementById('btn-play').textContent = 'Play';
+  updateEventUI();
+}
+
 function resetSim() {
   playing = false;
   elapsedDays = 0;
   earthAngle = 0;
   targetAngle = 0;
-  siderealReached = false;
-  synodicReached = false;
-  siderealDay = 0;
-  synodicDay = 0;
+  siderealCount = 0;
+  synodicCount = 0;
   siderealFlashTimer = 0;
   synodicFlashTimer = 0;
   prevRelAngle = 0;
   prevTargetAngle = 0;
-  siderealSnapshot = null;
-  synodicSnapshot = null;
+  events.length = 0;
+  eventIdx = -1;
   earthTrail.length = 0;
   targetTrail.length = 0;
   updateUI();
   document.getElementById('btn-play').textContent = 'Play';
-  document.getElementById('event-sidereal').classList.remove('reached');
-  document.getElementById('event-synodic').classList.remove('reached');
-  document.getElementById('sidereal-result').textContent = 'Waiting…';
-  document.getElementById('sidereal-result').className = 'result pending';
-  document.getElementById('synodic-result').textContent = 'Waiting…';
-  document.getElementById('synodic-result').className = 'result pending';
-  document.getElementById('sidereal-fill').style.width = '0%';
-  document.getElementById('synodic-fill').style.width = '0%';
-  document.getElementById('sidereal-pct').textContent = '0%';
-  document.getElementById('synodic-pct').textContent = '0%';
+  updateEventUI();
+}
+
+function updateEventUI() {
+  const pl = PLANETS[selected];
+  document.getElementById('elapsed-days').textContent = Math.floor(elapsedDays).toLocaleString();
+  const sidEl = document.getElementById('event-sidereal');
+  const synEl = document.getElementById('event-synodic');
+  const sidRes = document.getElementById('sidereal-result');
+  const synRes = document.getElementById('synodic-result');
+  if (siderealCount > 0) {
+    sidEl.classList.add('reached');
+    const lastSid = events.filter(e => e.type === 'sidereal').pop();
+    sidRes.textContent = Math.round(lastSid.day).toLocaleString() + ' d (#' + siderealCount + ')';
+    sidRes.className = 'result';
+    document.getElementById('sidereal-fill').style.width = '100%';
+    document.getElementById('sidereal-pct').textContent = siderealCount + '×';
+  } else {
+    sidEl.classList.remove('reached');
+    sidRes.textContent = 'Waiting…';
+    sidRes.className = 'result pending';
+    document.getElementById('sidereal-fill').style.width = '0%';
+    document.getElementById('sidereal-pct').textContent = '0%';
+  }
+  if (synodicCount > 0) {
+    synEl.classList.add('reached');
+    const lastSyn = events.filter(e => e.type === 'synodic').pop();
+    synRes.textContent = Math.round(lastSyn.day).toLocaleString() + ' d (#' + synodicCount + ')';
+    synRes.className = 'result';
+    document.getElementById('synodic-fill').style.width = '100%';
+    document.getElementById('synodic-pct').textContent = synodicCount + '×';
+  } else {
+    synEl.classList.remove('reached');
+    synRes.textContent = 'Waiting…';
+    synRes.className = 'result pending';
+    document.getElementById('synodic-fill').style.width = '0%';
+    document.getElementById('synodic-pct').textContent = '0%';
+  }
 }
 
 function updateUI() {
@@ -344,7 +411,22 @@ document.getElementById('btn-reset').addEventListener('click', resetSim);
 document.getElementById('speed-slider').addEventListener('input', updateSpeedDisplay);
 document.addEventListener('keydown', e => {
   if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowLeft' && e.target === document.body) {
+    e.preventDefault();
+    if (eventIdx >= 0) jumpToEvent(eventIdx - 1);
+  }
+  if (e.code === 'ArrowRight' && e.target === document.body) {
+    e.preventDefault();
+    if (eventIdx < events.length - 1) jumpToEvent(eventIdx + 1);
+  }
 });
+document.addEventListener('wheel', e => {
+  const slider = document.getElementById('speed-slider');
+  const step = e.deltaY < 0 ? 2 : -2;
+  slider.value = Math.max(0, Math.min(100, parseFloat(slider.value) + step));
+  updateSpeedDisplay();
+  e.preventDefault();
+}, { passive: false });
 highlightRefRow();
 updateSpeedDisplay();
 
@@ -398,7 +480,7 @@ new p5(p => {
     const pColor = planet.color;
 
     // --- SIM ---
-    if (playing && !synodicReached) {
+    if (playing) {
       const dt = getSpeed(parseFloat(document.getElementById('speed-slider').value)) / 60;
       prevTargetAngle = targetAngle % 360;
       prevRelAngle = ((targetAngle - earthAngle) % 360 + 360) % 360;
@@ -406,54 +488,37 @@ new p5(p => {
       earthAngle += earthAngularVel * dt;
       targetAngle += targetAngularVel * dt;
 
-      if (!siderealReached && targetAngle >= 360 && prevTargetAngle < 360) {
-        siderealReached = true;
-        siderealDay = elapsedDays;
+      const nextSiderealThreshold = (siderealCount + 1) * 360;
+      if (targetAngle >= nextSiderealThreshold && (targetAngle - dt * targetAngularVel) < nextSiderealThreshold) {
+        siderealCount++;
         siderealFlashTimer = 180;
-        siderealSnapshot = { earthAngle, targetAngle };
-        document.getElementById('event-sidereal').classList.add('reached');
-        const res = document.getElementById('sidereal-result');
-        res.textContent = Math.round(siderealDay).toLocaleString() + ' days';
-        res.className = 'result';
+        recordEvent('sidereal', elapsedDays);
+        updateEventUI();
       }
 
-      if (!synodicReached && elapsedDays > 5) {
+      if (elapsedDays > 5) {
         const relAngle = ((targetAngle - earthAngle) % 360 + 360) % 360;
         if ((prevRelAngle > 340 && relAngle < 20) || (prevRelAngle > 1 && relAngle < 1)) {
-          synodicReached = true;
-          synodicDay = elapsedDays;
+          synodicCount++;
           synodicFlashTimer = 240;
+          recordEvent('synodic', elapsedDays);
           playing = false;
-          synodicSnapshot = { earthAngle, targetAngle };
           document.getElementById('btn-play').textContent = 'Play';
-          document.getElementById('event-synodic').classList.add('reached');
-          const res = document.getElementById('synodic-result');
-          res.textContent = Math.round(synodicDay).toLocaleString() + ' days';
-          res.className = 'result';
+          updateEventUI();
         }
       }
 
       document.getElementById('elapsed-days').textContent = Math.floor(elapsedDays).toLocaleString();
 
       // Progress bars
-      if (!siderealReached) {
-        const sp = Math.min(100, (targetAngle / 360) * 100);
-        document.getElementById('sidereal-fill').style.width = sp + '%';
-        document.getElementById('sidereal-pct').textContent = Math.floor(sp) + '%';
-      } else {
-        document.getElementById('sidereal-fill').style.width = '100%';
-        document.getElementById('sidereal-pct').textContent = '100%';
-      }
+      const siderealProgress = ((targetAngle % 360) / 360) * 100;
+      document.getElementById('sidereal-fill').style.width = siderealProgress + '%';
+      document.getElementById('sidereal-pct').textContent = siderealCount > 0 ? siderealCount + '×' : Math.floor(siderealProgress) + '%';
 
-      if (!synodicReached) {
-        const relNow = ((targetAngle - earthAngle) % 360 + 360) % 360;
-        const synProg = relNow < 1 ? 100 : (1 - relNow / 360) * 100;
-        document.getElementById('synodic-fill').style.width = Math.max(0, Math.min(100, synProg)) + '%';
-        document.getElementById('synodic-pct').textContent = Math.floor(Math.max(0, Math.min(100, synProg))) + '%';
-      } else {
-        document.getElementById('synodic-fill').style.width = '100%';
-        document.getElementById('synodic-pct').textContent = '100%';
-      }
+      const relNow = ((targetAngle - earthAngle) % 360 + 360) % 360;
+      const synProg = relNow < 1 ? 100 : (1 - relNow / 360) * 100;
+      document.getElementById('synodic-fill').style.width = Math.max(0, Math.min(100, synProg)) + '%';
+      document.getElementById('synodic-pct').textContent = synodicCount > 0 ? synodicCount + '×' : Math.floor(Math.max(0, synProg)) + '%';
     }
 
     // --- DRAW ---
@@ -525,7 +590,7 @@ new p5(p => {
     }
     p.noFill();
     for (let i = 1; i < earthTrail.length; i++) {
-      p.stroke(78, 117, 150, (i / earthTrail.length) * 25);
+      p.stroke(74, 138, 92, (i / earthTrail.length) * 25);
       p.strokeWeight(2);
       p.line(earthTrail[i-1].x, earthTrail[i-1].y, earthTrail[i].x, earthTrail[i].y);
     }
@@ -536,15 +601,15 @@ new p5(p => {
     }
 
     // --- SIDEREAL ARC: shows how much of 360° the target has covered ---
-    if (!siderealReached && elapsedDays > 0) {
+    if (elapsedDays > 0) {
       p.noFill();
       p.stroke(77, 126, 94, 22);
       p.strokeWeight(Math.max(4, targetR * 0.045));
-      p.arc(cx, cy, targetR * 2, targetR * 2, p.radians(-90), p.radians(-90 + targetAngle));
+      p.arc(cx, cy, targetR * 2, targetR * 2, p.radians(-90), p.radians(-90 + (targetAngle % 360)));
     }
 
     // --- SYNODIC WEDGE: shows angular gap between Earth and target ---
-    if (elapsedDays > 0 && !synodicReached) {
+    if (elapsedDays > 0 && playing) {
       const relAngle = ((targetAngle - earthAngle) % 360 + 360) % 360;
       const eAng = p.radians(-90 + earthAngle);
       const tAng = p.radians(-90 + targetAngle);
@@ -578,69 +643,59 @@ new p5(p => {
       }
     }
 
-    // --- SIDEREAL GHOST ---
-    if (siderealSnapshot) {
-      const sE = atp(cx, cy, earthR, siderealSnapshot.earthAngle);
-      const sT = atp(cx, cy, targetR, siderealSnapshot.targetAngle);
-      const sC = [77, 126, 94];
-      const gs = Math.max(9, maxR * 0.04);
+    // --- EVENT GHOSTS ---
+    const gs = Math.max(9, maxR * 0.04);
+    const sC = [77, 126, 94];
+    const synC = [110, 92, 153];
 
-      p.stroke(sC[0], sC[1], sC[2], 30);
-      p.strokeWeight(0.8);
-      p.line(cx, cy, cx, cy - tickR);
+    events.forEach((ev, i) => {
+      const color = ev.type === 'sidereal' ? sC : synC;
+      const alpha = (i === eventIdx) ? 60 : 25;
+      const eP = atp(cx, cy, earthR, ev.earthAngle);
+      const tP = atp(cx, cy, targetR, ev.targetAngle);
 
-      drawGhost(sT, sC, gs, 'Sidereal');
-      drawGhost(sE, [78, 117, 150], gs * 0.7, null);
-
-      // Dashed connector
-      p.stroke(sC[0], sC[1], sC[2], 25);
-      p.strokeWeight(0.5);
-      const dx = sT.x - sE.x, dy = sT.y - sE.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      for (let i = 0; i < Math.floor(dist / 10); i++) {
-        const t1 = (i * 10) / dist, t2 = (i * 10 + 4) / dist;
-        if (t2 <= 1) p.line(sE.x + dx * t1, sE.y + dy * t1, sE.x + dx * t2, sE.y + dy * t2);
+      if (ev.type === 'synodic') {
+        const alignAng = p.radians(-90 + ev.earthAngle);
+        p.stroke(color[0], color[1], color[2], alpha * 0.6);
+        p.strokeWeight(0.6);
+        p.line(cx - Math.cos(alignAng) * tickR, cy - Math.sin(alignAng) * tickR,
+               cx + Math.cos(alignAng) * tickR, cy + Math.sin(alignAng) * tickR);
       }
 
-      if (siderealFlashTimer > 0) {
-        siderealFlashTimer--;
+      drawGhost(tP, color, gs * (i === eventIdx ? 1 : 0.7), i === eventIdx ? ev.type.charAt(0).toUpperCase() + ev.type.slice(1) : null);
+      drawGhost(eP, ev.type === 'sidereal' ? [74, 138, 92] : color, gs * 0.5, null);
+    });
+
+    if (siderealFlashTimer > 0) {
+      siderealFlashTimer--;
+      const lastSid = events.filter(e => e.type === 'sidereal').pop();
+      if (lastSid) {
         const pulse = 1 - siderealFlashTimer / 180;
+        const pos = atp(cx, cy, targetR, lastSid.targetAngle);
         p.noFill(); p.stroke(sC[0], sC[1], sC[2], (1 - pulse) * 50);
         p.strokeWeight(1);
-        p.ellipse(sT.x, sT.y, gs * (3 + pulse * 8), gs * (3 + pulse * 8));
+        p.ellipse(pos.x, pos.y, gs * (3 + pulse * 8), gs * (3 + pulse * 8));
       }
     }
 
-    // --- SYNODIC GHOST ---
-    if (synodicSnapshot) {
-      const synE = atp(cx, cy, earthR, synodicSnapshot.earthAngle);
-      const synT = atp(cx, cy, targetR, synodicSnapshot.targetAngle);
-      const synC = [110, 92, 153];
-      const gs = Math.max(9, maxR * 0.04);
-
-      const alignAngle = p.radians(-90 + synodicSnapshot.earthAngle);
-      const far = tickR;
-      p.stroke(synC[0], synC[1], synC[2], 35);
-      p.strokeWeight(1);
-      p.line(cx - Math.cos(alignAngle) * far, cy - Math.sin(alignAngle) * far,
-             cx + Math.cos(alignAngle) * far, cy + Math.sin(alignAngle) * far);
-
-      drawGhost(synT, synC, gs, 'Synodic');
-      drawGhost(synE, synC, gs * 0.7, null);
-
-      if (synodicFlashTimer > 0) {
-        synodicFlashTimer--;
+    if (synodicFlashTimer > 0) {
+      synodicFlashTimer--;
+      const lastSyn = events.filter(e => e.type === 'synodic').pop();
+      if (lastSyn) {
         const pulse = 1 - synodicFlashTimer / 240;
+        const posT = atp(cx, cy, targetR, lastSyn.targetAngle);
+        const posE = atp(cx, cy, earthR, lastSyn.earthAngle);
         p.noFill(); p.stroke(synC[0], synC[1], synC[2], (1 - pulse) * 45);
         p.strokeWeight(1);
-        p.ellipse(synT.x, synT.y, gs * (3 + pulse * 10), gs * (3 + pulse * 10));
-        p.ellipse(synE.x, synE.y, gs * (3 + pulse * 8), gs * (3 + pulse * 8));
+        p.ellipse(posT.x, posT.y, gs * (3 + pulse * 10), gs * (3 + pulse * 10));
+        p.ellipse(posE.x, posE.y, gs * (3 + pulse * 8), gs * (3 + pulse * 8));
       }
     }
 
     // Live connector
-    p.stroke(160, 80, 95, synodicReached ? 120 : 50);
-    p.strokeWeight(synodicReached ? 2 : 1.2);
+    const locked = !playing && synodicCount > 0;
+    p.stroke(160, 80, 95, locked ? 120 : 50);
+    p.strokeWeight(locked ? 2 : 1.2);
     p.line(ePos.x, ePos.y, tPos.x, tPos.y);
 
     // Sun
@@ -655,18 +710,23 @@ new p5(p => {
 
     // Earth
     const es = Math.max(10, maxR * 0.042);
+    const eBreathe = 1 + Math.sin(p.frameCount * 0.015) * 0.06;
     p.noStroke();
-    p.fill(78, 117, 150, 25); p.ellipse(ePos.x, ePos.y, es * 3, es * 3);
-    p.fill(78, 117, 150); p.ellipse(ePos.x, ePos.y, es, es);
+    p.fill(120, 175, 210, 5); p.ellipse(ePos.x, ePos.y, es * 5.5 * eBreathe, es * 5.5 * eBreathe);
+    p.fill(100, 165, 195, 10); p.ellipse(ePos.x, ePos.y, es * 4 * eBreathe, es * 4 * eBreathe);
+    p.fill(74, 138, 92, 20); p.ellipse(ePos.x, ePos.y, es * 2.8, es * 2.8);
+    p.fill(74, 138, 92); p.ellipse(ePos.x, ePos.y, es, es);
+    p.fill(55, 105, 80, 120); p.ellipse(ePos.x - es * 0.15, ePos.y + es * 0.1, es * 0.5, es * 0.4);
+    p.fill(140, 195, 150, 70); p.ellipse(ePos.x + es * 0.12, ePos.y - es * 0.15, es * 0.25, es * 0.25);
     // Angle readout near Earth
-    p.fill(50, 85, 115, 210);
+    p.fill(50, 100, 65, 210);
     p.textSize(15); p.textAlign(p.CENTER, p.BOTTOM);
     p.text('⊕ ' + Math.floor(earthAngle % 360) + '°', ePos.x, ePos.y - es - 5);
 
     // Target
     let tc = [...pColor];
     const ts = Math.max(10, maxR * 0.042);
-    if (siderealFlashTimer > 0 && !synodicReached) {
+    if (siderealFlashTimer > 0) {
       const fl = (Math.sin(siderealFlashTimer * 0.2) + 1) * 0.5;
       tc = [p.lerp(pColor[0], 77, fl), p.lerp(pColor[1], 126, fl), p.lerp(pColor[2], 94, fl)];
     }
@@ -683,15 +743,17 @@ new p5(p => {
     p.text(SYMBOLS[selected] + ' ' + Math.floor(targetAngle % 360) + '°', tPos.x, tPos.y - ts - 5);
 
     // Status
+    p.textAlign(p.CENTER, p.CENTER);
     if (!playing && elapsedDays === 0) {
       p.fill(130, 120, 110, 140); p.textSize(14);
-      p.textAlign(p.CENTER, p.CENTER);
-      p.text('Press Play to begin', cx, cy + maxR + 28);
-    }
-    if (synodicReached && synodicFlashTimer > 100) {
-      p.fill(110, 92, 153, Math.min(180, (240 - synodicFlashTimer) * 5));
-      p.textSize(13); p.textAlign(p.CENTER, p.CENTER);
-      p.text('Synodic alignment reached', cx, cy + maxR + 28);
+      p.text('Space to play  ·  Scroll to adjust speed', cx, cy + maxR + 28);
+    } else if (!playing && events.length > 0) {
+      p.fill(130, 120, 110, 120); p.textSize(13);
+      const evLabel = events[eventIdx]?.type === 'synodic' ? 'Synodic lock' : 'Sidereal lock';
+      p.text(evLabel + ' #' + (eventIdx + 1) + '  ·  Space to continue  ·  ← → to step', cx, cy + maxR + 28);
+    } else if (playing) {
+      p.fill(130, 120, 110, 60); p.textSize(12);
+      p.text('← → step between events', cx, cy + maxR + 28);
     }
   };
 });

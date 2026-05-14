@@ -4,88 +4,95 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Cosmic Botany — Orbital Period Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --bg:#080c14;--panel:#0d1220;--border:#1a2236;
-    --text:#c9d1d9;--dim:#4a5568;--accent:#38bdf8;
-    --sun:#f59e0b;--earth:#60a5fa;--target:#f472b6;
-    --sidereal:#34d399;--synodic:#a78bfa;
-    --radius:6px;
+    --bg:#f4efe6;--panel:#faf7f1;--border:#d6cdbf;
+    --text:#2c2520;--dim:#8a7e72;--accent:#a07830;
+    --sun:#c8922a;--earth:#4e7596;--target:#b5636f;
+    --sidereal:#4d7e5e;--synodic:#6e5c99;
+    --canvas-bg:#d2dee6;
+    --radius:4px;
   }
-  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'SF Mono',ui-monospace,'Cascadia Code','Fira Code','Consolas',monospace;font-size:13px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'EB Garamond',Georgia,'Times New Roman',serif;font-size:15px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 
-  #app{display:grid;height:100%;width:100%;grid-template-columns:200px 1fr 220px;grid-template-rows:1fr;gap:0}
+  #app{display:grid;height:100%;width:100%;grid-template-columns:210px 1fr 230px;grid-template-rows:1fr;gap:0}
 
-  .panel{background:var(--panel);padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .panel{background:var(--panel);padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .panel.left{border-right:1px solid var(--border)}
   .panel.right{border-left:1px solid var(--border)}
-  .panel h2{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);font-weight:600;margin-bottom:2px}
+  .panel h2{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--dim);font-weight:500;margin-bottom:0}
 
-  #canvas-wrap{position:relative;overflow:hidden;background:var(--bg)}
+  #canvas-wrap{position:relative;overflow:hidden;background:var(--canvas-bg)}
   #canvas-wrap canvas{display:block}
 
-  label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);display:block;margin-bottom:5px;font-weight:500}
+  label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);display:block;margin-bottom:6px;font-weight:500;font-family:'EB Garamond',serif}
 
-  select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;font-size:13px;cursor:pointer;transition:border-color .2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%234a5568' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+  select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:'EB Garamond',serif;font-size:16px;cursor:pointer;transition:border-color .2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 4l3 3 3-3' stroke='%238a7e72' stroke-width='1.2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
   select:focus{outline:none;border-color:var(--accent)}
   select option{background:var(--panel);color:var(--text)}
 
-  button{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.8px}
+  button{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:'EB Garamond',serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .15s;letter-spacing:1px}
   button:active{transform:scale(.97)}
-  button.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+  button.primary{background:var(--accent);color:#faf7f1;border-color:var(--accent)}
   button.primary:active{opacity:.85}
 
-  .btn-row{display:flex;gap:6px}
+  .btn-row{display:flex;gap:8px}
   .btn-row button{flex:1}
 
-  input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;margin-top:6px}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 6px rgba(56,189,248,.3)}
-  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:var(--border);outline:none;margin-top:8px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--panel)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--panel)}
 
-  .speed-val{text-align:center;color:var(--accent);font-size:13px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+  .speed-val{text-align:center;color:var(--accent);font-size:16px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums}
 
-  .data-block{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
-  .data-block .label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:3px;font-weight:500}
-  .data-block .value{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
-  .data-block .value.small{font-size:13px;font-weight:500;letter-spacing:0;margin-top:2px}
+  .data-block{border-bottom:1px solid var(--border);padding:10px 0}
+  .data-block:first-of-type{padding-top:0}
+  .data-block .label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:3px;font-weight:500}
+  .data-block .value{font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+  .data-block .value.small{font-size:15px;font-weight:400;letter-spacing:0;margin-top:1px;color:var(--dim)}
 
-  .event-box{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;opacity:.35;transition:all .4s ease}
-  .event-box.reached{opacity:1;box-shadow:0 0 20px rgba(0,0,0,.3)}
-  .event-box.sidereal.reached{border-color:var(--sidereal);box-shadow:0 0 20px rgba(52,211,153,.08)}
-  .event-box.synodic.reached{border-color:var(--synodic);box-shadow:0 0 20px rgba(167,139,250,.08)}
-  .event-box .tag{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;font-weight:600}
+  .event-box{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;opacity:.4;transition:all .4s ease;background:var(--bg)}
+  .event-box.reached{opacity:1}
+  .event-box.sidereal.reached{border-color:var(--sidereal);background:rgba(77,126,94,.06)}
+  .event-box.synodic.reached{border-color:var(--synodic);background:rgba(110,92,153,.06)}
+  .event-box .tag{font-size:10px;text-transform:uppercase;letter-spacing:2px;margin-bottom:2px;font-weight:500}
   .event-box.sidereal .tag{color:var(--sidereal)}
   .event-box.synodic .tag{color:var(--synodic)}
-  .event-box .target-val{font-size:11px;color:var(--dim);margin-bottom:5px}
-  .event-box .result{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
-  .event-box .result.pending{color:var(--dim);font-style:italic;font-weight:400;font-size:11px}
+  .event-box .target-val{font-size:13px;color:var(--dim);margin-bottom:4px}
+  .event-box .result{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+  .event-box .result.pending{color:var(--dim);font-style:italic;font-weight:400;font-size:13px}
 
-  .legend{display:flex;flex-direction:column;gap:5px;margin-top:4px}
-  .legend-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--dim)}
+  .legend{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--dim)}
   .legend-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .legend-item .sym{font-size:16px;width:14px;text-align:center;flex-shrink:0}
 
-  .info-note{font-size:10px;color:var(--dim);line-height:1.6;margin-top:auto;padding-top:10px;border-top:1px solid var(--border);opacity:.7}
+  .info-note{font-size:13px;color:var(--dim);line-height:1.6;margin-top:auto;padding-top:12px;border-top:1px solid var(--border);font-style:italic}
 
   @media(max-width:900px){
     #app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
-    .panel{border:none !important;padding:12px 14px;gap:8px}
+    .panel{border:none !important;padding:14px 16px;gap:10px}
     .panel.left{border-bottom:1px solid var(--border) !important;flex-direction:row;flex-wrap:wrap;align-items:flex-end}
     .panel.left>*{flex:1;min-width:110px}
     .panel.left h2{flex-basis:100%}
     .panel.right{border-top:1px solid var(--border) !important;flex-direction:row;flex-wrap:wrap;align-items:flex-start}
     .panel.right h2{flex-basis:100%}
     .panel.right .data-block,.panel.right .event-box{flex:1;min-width:130px}
-    .panel.right .legend{flex-basis:100%;flex-direction:row;gap:12px}
+    .panel.right .legend{flex-basis:100%;flex-direction:row;gap:14px}
     .panel.right .info-note{flex-basis:100%}
-    .data-block .value{font-size:17px}
+    .data-block .value{font-size:20px}
   }
   @media(max-width:500px){
-    .panel{padding:10px}
-    .data-block .value{font-size:15px}
-    .event-box .result{font-size:13px}
-    select,button{padding:10px;font-size:14px}
+    .panel{padding:10px 12px}
+    .data-block .value{font-size:18px}
+    .event-box .result{font-size:15px}
+    select,button{padding:12px;font-size:16px}
+    input[type=range]{height:4px;margin-top:10px}
     input[type=range]::-webkit-slider-thumb{width:22px;height:22px}
   }
 </style>
@@ -98,13 +105,13 @@
     <div>
       <label for="planet-select">Target Planet</label>
       <select id="planet-select">
-        <option value="Mercury">Mercury</option>
-        <option value="Venus">Venus</option>
-        <option value="Mars" selected>Mars</option>
-        <option value="Jupiter">Jupiter</option>
-        <option value="Saturn">Saturn</option>
-        <option value="Uranus">Uranus</option>
-        <option value="Neptune">Neptune</option>
+        <option value="Mercury">☿ Mercury</option>
+        <option value="Venus">♀ Venus</option>
+        <option value="Mars" selected>♂ Mars</option>
+        <option value="Jupiter">♃ Jupiter</option>
+        <option value="Saturn">♄ Saturn</option>
+        <option value="Uranus">♅ Uranus</option>
+        <option value="Neptune">♆ Neptune</option>
       </select>
     </div>
     <div class="btn-row">
@@ -117,7 +124,7 @@
       <div class="speed-val" id="speed-display">1×</div>
     </div>
     <div class="info-note">
-      Both planets start aligned at 12 o'clock. The simulation marks the exact positions where each period completes.
+      Both planets begin aligned at 0°. The simulation traces where each period completes.
     </div>
   </div>
 
@@ -130,7 +137,7 @@
       <div class="value" id="elapsed-days">0</div>
     </div>
     <div class="data-block">
-      <div class="label" id="planet-name-label">Mars</div>
+      <div class="label" id="planet-name-label">♂ Mars</div>
       <div class="value small" id="planet-sidereal-info">Sidereal: 687 d</div>
       <div class="value small" id="planet-synodic-info">Synodic: 780 d</div>
     </div>
@@ -148,26 +155,30 @@
       <div class="legend-item"><span class="dot" style="background:var(--sun)"></span> Sun</div>
       <div class="legend-item"><span class="dot" style="background:var(--earth)"></span> Earth</div>
       <div class="legend-item"><span class="dot" style="background:var(--target)"></span> <span id="legend-target">Mars</span></div>
-      <div class="legend-item"><span class="dot" style="background:var(--sidereal)"></span> Sidereal mark</div>
-      <div class="legend-item"><span class="dot" style="background:var(--synodic)"></span> Synodic mark</div>
+      <div class="legend-item"><span class="dot" style="background:var(--sidereal)"></span> Sidereal</div>
+      <div class="legend-item"><span class="dot" style="background:var(--synodic)"></span> Synodic</div>
     </div>
     <div class="info-note">
-      Sidereal: one full orbit relative to the stars.<br>
-      Synodic: realignment of Earth and planet as seen from the Sun.
+      Sidereal — one full orbit relative to the stars. Synodic — realignment with Earth, as seen from the Sun.
     </div>
   </div>
 
 </div>
 
 <script>
+const SYMBOLS = {
+  Mercury: '☿', Venus: '♀', Mars: '♂',
+  Jupiter: '♃', Saturn: '♄', Uranus: '♅', Neptune: '♆',
+};
+
 const PLANETS = {
-  Mercury:  { sidereal: 88,    synodic: 116,  au: 0.387, color: [180,180,200] },
-  Venus:    { sidereal: 225,   synodic: 584,  au: 0.723, color: [245,190,120] },
-  Mars:     { sidereal: 687,   synodic: 780,  au: 1.524, color: [244,114,182] },
-  Jupiter:  { sidereal: 4333,  synodic: 399,  au: 5.203, color: [234,179,130] },
-  Saturn:   { sidereal: 10759, synodic: 378,  au: 9.537, color: [220,200,160] },
-  Uranus:   { sidereal: 30687, synodic: 370,  au: 19.191, color: [130,210,220] },
-  Neptune:  { sidereal: 60190, synodic: 367,  au: 30.069, color: [100,140,240] },
+  Mercury:  { sidereal: 88,    synodic: 116,  au: 0.387, color: [140,130,145] },
+  Venus:    { sidereal: 225,   synodic: 584,  au: 0.723, color: [185,145,95]  },
+  Mars:     { sidereal: 687,   synodic: 780,  au: 1.524, color: [181,99,111]  },
+  Jupiter:  { sidereal: 4333,  synodic: 399,  au: 5.203, color: [175,140,100] },
+  Saturn:   { sidereal: 10759, synodic: 378,  au: 9.537, color: [170,155,120] },
+  Uranus:   { sidereal: 30687, synodic: 370,  au: 19.191, color: [100,150,155] },
+  Neptune:  { sidereal: 60190, synodic: 367,  au: 30.069, color: [90,110,165] },
 };
 const EARTH = { sidereal: 365.25, au: 1.0 };
 
@@ -184,18 +195,12 @@ let siderealFlashTimer = 0;
 let synodicFlashTimer = 0;
 let prevRelAngle = 0;
 let prevTargetAngle = 0;
-
-// Event snapshots for persistent markers
-let siderealSnapshot = null; // { earthAngle, targetAngle, earthPos, targetPos }
+let siderealSnapshot = null;
 let synodicSnapshot = null;
 
-// Trail buffers
 const earthTrail = [];
 const targetTrail = [];
-const TRAIL_MAX = 600;
-
-// Starfield
-let stars = [];
+const TRAIL_MAX = 500;
 
 const earthAngularVel = 360 / EARTH.sidereal;
 
@@ -233,7 +238,8 @@ function resetSim() {
 
 function updateUI() {
   const pl = PLANETS[selected];
-  document.getElementById('planet-name-label').textContent = selected;
+  const sym = SYMBOLS[selected];
+  document.getElementById('planet-name-label').textContent = sym + ' ' + selected;
   document.getElementById('planet-sidereal-info').textContent = `Sidereal: ${pl.sidereal.toLocaleString()} d`;
   document.getElementById('planet-synodic-info').textContent = `Synodic: ${pl.synodic.toLocaleString()} d`;
   document.getElementById('sidereal-target').textContent = `Target: ${pl.sidereal.toLocaleString()} days`;
@@ -265,25 +271,11 @@ document.getElementById('btn-reset').addEventListener('click', resetSim);
 document.getElementById('speed-slider').addEventListener('input', updateSpeedDisplay);
 updateSpeedDisplay();
 
-// --- P5.js ---
 const canvasWrap = document.getElementById('canvas-wrap');
 
 new p5(p => {
   let cw, ch;
-
-  function genStars() {
-    stars = [];
-    for (let i = 0; i < 200; i++) {
-      stars.push({
-        x: p.random(cw),
-        y: p.random(ch),
-        s: p.random(0.5, 2),
-        b: p.random(40, 120),
-        twinkleSpeed: p.random(0.01, 0.04),
-        twinkleOffset: p.random(p.TWO_PI),
-      });
-    }
-  }
+  let garamondFont = null;
 
   p.setup = () => {
     const rect = canvasWrap.getBoundingClientRect();
@@ -291,8 +283,7 @@ new p5(p => {
     ch = rect.height;
     const cnv = p.createCanvas(cw, ch);
     cnv.parent(canvasWrap);
-    p.textFont('monospace');
-    genStars();
+    p.textFont('EB Garamond, Georgia, serif');
   };
 
   p.windowResized = () => {
@@ -300,7 +291,6 @@ new p5(p => {
     cw = rect.width;
     ch = rect.height;
     p.resizeCanvas(cw, ch);
-    genStars();
   };
 
   function angleToPos(cx, cy, radius, angleDeg) {
@@ -308,28 +298,24 @@ new p5(p => {
     return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
   }
 
-  function drawGhostPlanet(pos, color, size, label, labelColor) {
-    // Outer ring
+  function drawGhostMarker(pos, color, size, label) {
     p.noFill();
-    p.stroke(color[0], color[1], color[2], 120);
-    p.strokeWeight(1.5);
-    p.ellipse(pos.x, pos.y, size * 3, size * 3);
-    // Cross
-    const arm = size * 1.8;
-    p.stroke(color[0], color[1], color[2], 60);
-    p.strokeWeight(0.8);
+    p.stroke(color[0], color[1], color[2], 140);
+    p.strokeWeight(1);
+    p.ellipse(pos.x, pos.y, size * 2.8, size * 2.8);
+    const arm = size * 1.6;
+    p.stroke(color[0], color[1], color[2], 50);
+    p.strokeWeight(0.6);
     p.line(pos.x - arm, pos.y, pos.x + arm, pos.y);
     p.line(pos.x, pos.y - arm, pos.x, pos.y + arm);
-    // Center dot
     p.noStroke();
-    p.fill(color[0], color[1], color[2], 180);
-    p.ellipse(pos.x, pos.y, size * 0.6, size * 0.6);
-    // Label
+    p.fill(color[0], color[1], color[2], 200);
+    p.ellipse(pos.x, pos.y, size * 0.5, size * 0.5);
     if (label) {
-      p.fill(labelColor[0], labelColor[1], labelColor[2], 160);
-      p.textSize(9);
+      p.fill(color[0], color[1], color[2], 180);
+      p.textSize(10);
       p.textAlign(p.CENTER, p.TOP);
-      p.text(label, pos.x, pos.y + size * 2);
+      p.text(label, pos.x, pos.y + size * 1.8);
     }
   }
 
@@ -338,19 +324,15 @@ new p5(p => {
     const targetAngularVel = 360 / planet.sidereal;
     const pColor = planet.color;
 
-    // --- Simulation step ---
     if (playing && !synodicReached) {
       const speed = getSpeed(parseFloat(document.getElementById('speed-slider').value));
       const dt = speed / 60;
-
       prevTargetAngle = targetAngle % 360;
       prevRelAngle = ((targetAngle - earthAngle) % 360 + 360) % 360;
-
       elapsedDays += dt;
       earthAngle += earthAngularVel * dt;
       targetAngle += targetAngularVel * dt;
 
-      // Sidereal detection
       if (!siderealReached && targetAngle >= 360 && prevTargetAngle < 360) {
         siderealReached = true;
         siderealDay = elapsedDays;
@@ -362,7 +344,6 @@ new p5(p => {
         res.className = 'result';
       }
 
-      // Synodic detection
       if (!synodicReached && elapsedDays > 5) {
         const relAngle = ((targetAngle - earthAngle) % 360 + 360) % 360;
         if ((prevRelAngle > 340 && relAngle < 20) || (prevRelAngle > 1 && relAngle < 1)) {
@@ -378,70 +359,71 @@ new p5(p => {
           res.className = 'result';
         }
       }
-
       document.getElementById('elapsed-days').textContent = Math.floor(elapsedDays).toLocaleString();
     }
 
-    // --- Drawing ---
-    p.background(8, 12, 20);
+    // --- Canvas ---
+    // Warm parchment-blue field
+    p.background(210, 222, 230);
 
     const cx = cw / 2;
     const cy = ch / 2;
     const maxR = Math.min(cw, ch) * 0.40;
 
-    // Starfield
-    p.noStroke();
-    for (const s of stars) {
-      const twinkle = Math.sin(p.frameCount * s.twinkleSpeed + s.twinkleOffset);
-      const alpha = s.b + twinkle * 30;
-      p.fill(200, 210, 230, alpha);
-      p.ellipse(s.x, s.y, s.s, s.s);
+    // Soft radial wash — pale rose center fading out like the volvelle
+    for (let r = maxR * 1.1; r > 0; r -= 3) {
+      const t = r / (maxR * 1.1);
+      p.noStroke();
+      p.fill(
+        p.lerp(225, 210, t),
+        p.lerp(215, 222, t),
+        p.lerp(210, 230, t),
+        8
+      );
+      p.ellipse(cx, cy, r * 2, r * 2);
+    }
+    // Warmer center
+    for (let r = maxR * 0.4; r > 0; r -= 2) {
+      const t = r / (maxR * 0.4);
+      p.noStroke();
+      p.fill(235, 218, 200, 6);
+      p.ellipse(cx, cy, r * 2, r * 2);
     }
 
-    // Scale orbits
     const outerAU = Math.max(EARTH.au, planet.au);
     const earthR = (EARTH.au / outerAU) * maxR;
     const targetR = (planet.au / outerAU) * maxR;
 
-    // Subtle radial grid
+    // Orbit rings — gold/ochre like the volvelle bands
     p.noFill();
-    p.strokeWeight(0.3);
-    p.stroke(30, 41, 59, 40);
-    for (let i = 1; i <= 5; i++) {
-      p.ellipse(cx, cy, (maxR * i / 5) * 2, (maxR * i / 5) * 2);
-    }
-    // Cardinal lines
-    p.stroke(30, 41, 59, 25);
-    p.strokeWeight(0.3);
-    p.line(cx - maxR * 1.1, cy, cx + maxR * 1.1, cy);
-    p.line(cx, cy - maxR * 1.1, cx, cy + maxR * 1.1);
-
-    // Start line (12 o'clock) — dashed
-    p.stroke(52, 211, 153, 35);
-    p.strokeWeight(1.5);
-    for (let y = cy - maxR - 15; y < cy - 10; y += 10) {
-      p.line(cx, y, cx, Math.min(y + 5, cy - 10));
-    }
-    // "0°" label at top
-    p.noStroke();
-    p.fill(52, 211, 153, 60);
-    p.textSize(9);
-    p.textAlign(p.CENTER, p.BOTTOM);
-    p.text('0°', cx, cy - maxR - 18);
-
-    // Orbit paths
-    p.noFill();
-    p.strokeWeight(0.8);
-    p.stroke(96, 165, 250, 30);
+    p.strokeWeight(1);
+    p.stroke(180, 160, 120, 70);
     p.ellipse(cx, cy, earthR * 2, earthR * 2);
-    p.stroke(pColor[0], pColor[1], pColor[2], 25);
+    p.stroke(180, 160, 120, 50);
     p.ellipse(cx, cy, targetR * 2, targetR * 2);
+
+    // Outer decorative ring
+    p.stroke(180, 160, 120, 30);
+    p.strokeWeight(0.5);
+    p.ellipse(cx, cy, maxR * 2.1, maxR * 2.1);
+
+    // Start line — 0° (12 o'clock)
+    p.stroke(77, 126, 94, 50);
+    p.strokeWeight(1);
+    for (let y = cy - maxR * 1.05; y < cy - 12; y += 8) {
+      p.line(cx, y, cx, Math.min(y + 4, cy - 12));
+    }
+    p.noStroke();
+    p.fill(77, 126, 94, 100);
+    p.textSize(11);
+    p.textAlign(p.CENTER, p.BOTTOM);
+    p.text('0°', cx, cy - maxR * 1.05 - 4);
 
     // Planet positions
     const ePos = angleToPos(cx, cy, earthR, earthAngle);
     const tPos = angleToPos(cx, cy, targetR, targetAngle);
 
-    // Update trails
+    // Trails
     if (playing || elapsedDays > 0) {
       earthTrail.push({ x: ePos.x, y: ePos.y });
       targetTrail.push({ x: tPos.x, y: tPos.y });
@@ -449,178 +431,171 @@ new p5(p => {
       if (targetTrail.length > TRAIL_MAX) targetTrail.shift();
     }
 
-    // Draw trails
     p.noFill();
     if (earthTrail.length > 2) {
       for (let i = 1; i < earthTrail.length; i++) {
-        const alpha = (i / earthTrail.length) * 35;
-        p.stroke(96, 165, 250, alpha);
-        p.strokeWeight(1.5);
+        const alpha = (i / earthTrail.length) * 30;
+        p.stroke(78, 117, 150, alpha);
+        p.strokeWeight(2);
         p.line(earthTrail[i-1].x, earthTrail[i-1].y, earthTrail[i].x, earthTrail[i].y);
       }
     }
     if (targetTrail.length > 2) {
       for (let i = 1; i < targetTrail.length; i++) {
-        const alpha = (i / targetTrail.length) * 35;
+        const alpha = (i / targetTrail.length) * 30;
         p.stroke(pColor[0], pColor[1], pColor[2], alpha);
-        p.strokeWeight(1.5);
+        p.strokeWeight(2);
         p.line(targetTrail[i-1].x, targetTrail[i-1].y, targetTrail[i].x, targetTrail[i].y);
       }
     }
 
-    // Swept arc for target (sidereal progress visual)
+    // Sidereal sweep arc
     if (!siderealReached && elapsedDays > 0) {
       p.noFill();
-      p.stroke(52, 211, 153, 15);
-      p.strokeWeight(Math.max(3, targetR * 0.05));
+      p.stroke(77, 126, 94, 20);
+      p.strokeWeight(Math.max(3, targetR * 0.04));
       p.arc(cx, cy, targetR * 2, targetR * 2, p.radians(-90), p.radians(-90 + targetAngle));
     }
 
-    // --- SIDEREAL MARKER ---
+    // --- SIDEREAL GHOST ---
     if (siderealSnapshot) {
       const sEarth = angleToPos(cx, cy, earthR, siderealSnapshot.earthAngle);
       const sTarget = angleToPos(cx, cy, targetR, siderealSnapshot.targetAngle);
-      const sColor = [52, 211, 153];
+      const sColor = [77, 126, 94];
+      const gSize = Math.max(7, maxR * 0.03);
 
-      // Radial line from sun through target's return point
-      p.stroke(sColor[0], sColor[1], sColor[2], 30);
+      p.stroke(sColor[0], sColor[1], sColor[2], 35);
       p.strokeWeight(0.8);
-      p.line(cx, cy, cx, cy - maxR - 10);
+      p.line(cx, cy, cx, cy - maxR * 1.05);
 
-      // Ghost planets
-      const gSize = Math.max(7, maxR * 0.035);
-      drawGhostPlanet(sTarget, sColor, gSize, 'SID', sColor);
-      drawGhostPlanet(sEarth, [96, 165, 250], gSize * 0.8, null, [96, 165, 250]);
+      drawGhostMarker(sTarget, sColor, gSize, 'Sidereal');
+      drawGhostMarker(sEarth, [78, 117, 150], gSize * 0.7, null);
 
-      // Connector between ghost positions
-      p.stroke(sColor[0], sColor[1], sColor[2], 25);
+      // Dashed connector
+      p.stroke(sColor[0], sColor[1], sColor[2], 30);
       p.strokeWeight(0.6);
-      const dashLen = 6;
       const dx = sTarget.x - sEarth.x;
       const dy = sTarget.y - sEarth.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const steps = Math.floor(dist / (dashLen * 2));
+      const steps = Math.floor(dist / 12);
       for (let i = 0; i < steps; i++) {
-        const t1 = (i * dashLen * 2) / dist;
-        const t2 = (i * dashLen * 2 + dashLen) / dist;
+        const t1 = (i * 12) / dist;
+        const t2 = (i * 12 + 5) / dist;
         if (t2 <= 1) {
-          p.line(
-            sEarth.x + dx * t1, sEarth.y + dy * t1,
-            sEarth.x + dx * t2, sEarth.y + dy * t2
-          );
+          p.line(sEarth.x + dx * t1, sEarth.y + dy * t1, sEarth.x + dx * t2, sEarth.y + dy * t2);
         }
       }
 
-      // Pulse ring if still flashing
       if (siderealFlashTimer > 0) {
         siderealFlashTimer--;
         const pulse = 1 - (siderealFlashTimer / 180);
         p.noFill();
-        p.stroke(sColor[0], sColor[1], sColor[2], (1 - pulse) * 80);
-        p.strokeWeight(1.5);
+        p.stroke(sColor[0], sColor[1], sColor[2], (1 - pulse) * 60);
+        p.strokeWeight(1);
         p.ellipse(sTarget.x, sTarget.y, gSize * (3 + pulse * 8), gSize * (3 + pulse * 8));
       }
     }
 
-    // --- SYNODIC MARKER ---
+    // --- SYNODIC GHOST ---
     if (synodicSnapshot) {
       const synEarth = angleToPos(cx, cy, earthR, synodicSnapshot.earthAngle);
       const synTarget = angleToPos(cx, cy, targetR, synodicSnapshot.targetAngle);
-      const synColor = [167, 139, 250];
+      const synColor = [110, 92, 153];
+      const gSize = Math.max(7, maxR * 0.03);
 
-      // Alignment line through Sun and both planets
       const alignAngle = p.radians(-90 + synodicSnapshot.earthAngle);
-      const far = maxR * 1.15;
+      const far = maxR * 1.1;
       p.stroke(synColor[0], synColor[1], synColor[2], 40);
-      p.strokeWeight(1.2);
+      p.strokeWeight(1);
       p.line(
         cx - Math.cos(alignAngle) * far, cy - Math.sin(alignAngle) * far,
         cx + Math.cos(alignAngle) * far, cy + Math.sin(alignAngle) * far
       );
 
-      // Ghost planets at synodic positions
-      const gSize = Math.max(7, maxR * 0.035);
-      drawGhostPlanet(synTarget, synColor, gSize, 'SYN', synColor);
-      drawGhostPlanet(synEarth, synColor, gSize * 0.8, null, synColor);
+      drawGhostMarker(synTarget, synColor, gSize, 'Synodic');
+      drawGhostMarker(synEarth, synColor, gSize * 0.7, null);
 
-      // Pulse ring if still flashing
       if (synodicFlashTimer > 0) {
         synodicFlashTimer--;
         const pulse = 1 - (synodicFlashTimer / 240);
         p.noFill();
-        p.stroke(synColor[0], synColor[1], synColor[2], (1 - pulse) * 60);
-        p.strokeWeight(1.5);
+        p.stroke(synColor[0], synColor[1], synColor[2], (1 - pulse) * 50);
+        p.strokeWeight(1);
         p.ellipse(synTarget.x, synTarget.y, gSize * (3 + pulse * 10), gSize * (3 + pulse * 10));
         p.ellipse(synEarth.x, synEarth.y, gSize * (3 + pulse * 8), gSize * (3 + pulse * 8));
       }
     }
 
-    // Connector line Earth ↔ Target (live)
-    p.stroke(248, 113, 113, synodicReached ? 180 : 60);
-    p.strokeWeight(synodicReached ? 2 : 1);
+    // Live connector
+    p.stroke(181, 99, 111, synodicReached ? 120 : 40);
+    p.strokeWeight(synodicReached ? 1.5 : 0.8);
     p.line(ePos.x, ePos.y, tPos.x, tPos.y);
 
-    // Sun
-    const sunPulse = 10 + Math.sin(p.frameCount * 0.025) * 1.5;
+    // Sun — warm gold layered glow
+    const sunPulse = 9 + Math.sin(p.frameCount * 0.02) * 1;
     p.noStroke();
-    p.fill(245, 158, 11, 12);
-    p.ellipse(cx, cy, sunPulse * 4, sunPulse * 4);
-    p.fill(245, 158, 11, 25);
-    p.ellipse(cx, cy, sunPulse * 2.5, sunPulse * 2.5);
-    p.fill(245, 158, 11, 50);
-    p.ellipse(cx, cy, sunPulse * 1.5, sunPulse * 1.5);
-    p.fill(245, 158, 11);
-    p.ellipse(cx, cy, sunPulse * 0.8, sunPulse * 0.8);
+    p.fill(200, 146, 42, 10);
+    p.ellipse(cx, cy, sunPulse * 5, sunPulse * 5);
+    p.fill(200, 146, 42, 20);
+    p.ellipse(cx, cy, sunPulse * 3, sunPulse * 3);
+    p.fill(200, 146, 42, 50);
+    p.ellipse(cx, cy, sunPulse * 1.8, sunPulse * 1.8);
+    p.fill(200, 146, 42);
+    p.ellipse(cx, cy, sunPulse * 0.7, sunPulse * 0.7);
+    // Sun symbol ☉
+    p.fill(244, 235, 220);
+    p.textSize(7);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.text('☉', cx, cy);
 
-    // Earth
-    const earthSize = Math.max(7, maxR * 0.035);
+    // Earth — muted blue
+    const earthSize = Math.max(7, maxR * 0.03);
     p.noStroke();
-    p.fill(96, 165, 250, 30);
-    p.ellipse(ePos.x, ePos.y, earthSize * 2.8, earthSize * 2.8);
-    p.fill(96, 165, 250);
+    p.fill(78, 117, 150, 25);
+    p.ellipse(ePos.x, ePos.y, earthSize * 3, earthSize * 3);
+    p.fill(78, 117, 150);
     p.ellipse(ePos.x, ePos.y, earthSize, earthSize);
-    p.fill(96, 165, 250, 160);
-    p.textSize(9);
+    p.fill(78, 117, 150, 180);
+    p.textSize(11);
     p.textAlign(p.CENTER, p.BOTTOM);
-    p.text('Earth', ePos.x, ePos.y - earthSize - 3);
+    p.text('⊕', ePos.x, ePos.y - earthSize - 2);
 
-    // Target planet
+    // Target planet — dusty rose / per-planet color
     let tc = [...pColor];
-    let tSize = Math.max(7, maxR * 0.035);
+    let tSize = Math.max(7, maxR * 0.03);
 
     if (siderealFlashTimer > 0 && !synodicReached) {
       const flash = (Math.sin(siderealFlashTimer * 0.2) + 1) * 0.5;
-      tc = [p.lerp(pColor[0], 52, flash), p.lerp(pColor[1], 211, flash), p.lerp(pColor[2], 153, flash)];
+      tc = [p.lerp(pColor[0], 77, flash), p.lerp(pColor[1], 126, flash), p.lerp(pColor[2], 94, flash)];
     }
     if (synodicFlashTimer > 0) {
       const flash = (Math.sin(synodicFlashTimer * 0.15) + 1) * 0.5;
-      tc = [p.lerp(pColor[0], 167, flash), p.lerp(pColor[1], 139, flash), p.lerp(pColor[2], 250, flash)];
+      tc = [p.lerp(pColor[0], 110, flash), p.lerp(pColor[1], 92, flash), p.lerp(pColor[2], 153, flash)];
     }
 
     p.noStroke();
-    p.fill(tc[0], tc[1], tc[2], 30);
-    p.ellipse(tPos.x, tPos.y, tSize * 2.8, tSize * 2.8);
+    p.fill(tc[0], tc[1], tc[2], 25);
+    p.ellipse(tPos.x, tPos.y, tSize * 3, tSize * 3);
     p.fill(tc[0], tc[1], tc[2]);
     p.ellipse(tPos.x, tPos.y, tSize, tSize);
-    p.fill(tc[0], tc[1], tc[2], 160);
-    p.textSize(9);
+    p.fill(tc[0], tc[1], tc[2], 180);
+    p.textSize(13);
     p.textAlign(p.CENTER, p.BOTTOM);
-    p.text(selected, tPos.x, tPos.y - tSize - 3);
+    p.text(SYMBOLS[selected], tPos.x, tPos.y - tSize - 2);
 
     // Status prompt
     if (!playing && elapsedDays === 0) {
-      p.fill(74, 85, 104, 160);
-      p.textSize(12);
+      p.fill(130, 120, 110, 160);
+      p.textSize(14);
       p.textAlign(p.CENTER, p.CENTER);
-      p.text('Press Play to begin', cx, cy + maxR + 28);
+      p.text('Press Play to begin', cx, cy + maxR + 24);
     }
 
-    // Synodic completion message
     if (synodicReached && synodicFlashTimer > 100) {
-      p.fill(167, 139, 250, Math.min(255, (240 - synodicFlashTimer) * 8));
-      p.textSize(11);
+      p.fill(110, 92, 153, Math.min(200, (240 - synodicFlashTimer) * 6));
+      p.textSize(13);
       p.textAlign(p.CENTER, p.CENTER);
-      p.text('Synodic alignment reached', cx, cy + maxR + 28);
+      p.text('Synodic alignment', cx, cy + maxR + 24);
     }
   };
 });

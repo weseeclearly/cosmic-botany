@@ -11,18 +11,18 @@
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --bg:#f4efe6;--panel:#faf7f1;--border:#d6cdbf;
-    --text:#2c2520;--dim:#8a7e72;--accent:#a07830;
-    --sun:#c8922a;--earth:#4e7596;--target:#b5636f;
-    --sidereal:#4d7e5e;--synodic:#6e5c99;
-    --canvas-bg:#d2dee6;
+    --bg:#efecea;--panel:#f6f4f1;--border:#d4cfc6;
+    --text:#2c2824;--dim:#7a7268;--accent:#8a6e2e;
+    --sun:#c8922a;--earth:#3d6a8c;--target:#a04858;
+    --sidereal:#3a6b4c;--synodic:#5a4a85;
+    --canvas-bg:#cfdae4;
     --radius:4px;
   }
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'EB Garamond',Georgia,'Times New Roman',serif;font-size:15px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 
   #app{display:grid;height:100%;width:100%;grid-template-columns:210px 1fr 250px;grid-template-rows:1fr;gap:0}
 
-  .panel{background:var(--panel);padding:20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .panel{background:var(--panel);padding:20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-color:var(--border)}
   .panel.left{border-right:1px solid var(--border)}
   .panel.right{border-left:1px solid var(--border)}
   .panel h2{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--dim);font-weight:500;margin-bottom:0}
@@ -82,7 +82,21 @@
   .legend-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
   .legend-item .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
-  .info-note{font-size:13px;color:var(--dim);line-height:1.6;margin-top:auto;padding-top:12px;border-top:1px solid var(--border);font-style:italic}
+  .ref-table{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+  .ref-table table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  .ref-table th{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:500;text-align:right;padding:3px 6px}
+  .ref-table th:first-child{text-align:left}
+  .ref-table td{padding:4px 6px;text-align:right;color:var(--dim);font-variant-numeric:tabular-nums;border-bottom:1px solid var(--border)}
+  .ref-table td:first-child{text-align:left;font-size:15px}
+  .ref-row{cursor:pointer;transition:color .15s}
+  .ref-row:hover td{color:var(--text)}
+  .ref-row.active td{color:var(--text);font-weight:600}
+
+  .info-note{font-size:13px;color:var(--dim);line-height:1.6;padding-top:12px;font-style:italic}
+
+  .explainer{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+  .explainer p{font-size:13px;color:var(--dim);line-height:1.6;margin-top:6px}
+  .explainer em{font-style:italic;color:var(--text)}
 
   @media(max-width:900px){
     #app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
@@ -133,8 +147,24 @@
       <input type="range" id="speed-slider" min="0" max="100" value="20">
       <div class="speed-val" id="speed-display">1×</div>
     </div>
+    <div class="ref-table">
+      <label>Reference — Earth Days</label>
+      <table>
+        <thead><tr><th></th><th>Sid.</th><th>Syn.</th></tr></thead>
+        <tbody>
+          <tr class="ref-row" data-planet="Mercury"><td>☿</td><td>88</td><td>116</td></tr>
+          <tr class="ref-row" data-planet="Venus"><td>♀</td><td>225</td><td>584</td></tr>
+          <tr class="ref-row" data-planet="Mars"><td>♂</td><td>687</td><td>780</td></tr>
+          <tr class="ref-row" data-planet="Jupiter"><td>♃</td><td>4,333</td><td>399</td></tr>
+          <tr class="ref-row" data-planet="Saturn"><td>♄</td><td>10,759</td><td>378</td></tr>
+          <tr class="ref-row" data-planet="Uranus"><td>♅</td><td>30,687</td><td>370</td></tr>
+          <tr class="ref-row" data-planet="Neptune"><td>♆</td><td>60,190</td><td>367</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <div class="info-note">
-      Both planets begin aligned at 0°. Sidereal measures absolute orbit; synodic measures relative realignment.
+      Sidereal — one full orbit relative to the stars. Synodic — the interval between successive alignments of Earth and planet as seen from the Sun. Both begin at 0°.
     </div>
   </div>
 
@@ -183,6 +213,13 @@
       <div class="legend-item"><span class="dot" style="background:var(--target)"></span> <span id="legend-target">Mars</span> orbit</div>
       <div class="legend-item"><span class="dot" style="background:var(--sidereal)"></span> Sidereal return</div>
       <div class="legend-item"><span class="dot" style="background:var(--synodic)"></span> Synodic alignment</div>
+    </div>
+
+    <div class="explainer">
+      <label>How to read</label>
+      <p>The <em>sidereal period</em> completes when the target planet returns to 0° — one full orbit relative to the fixed stars.</p>
+      <p>The <em>synodic period</em> completes when Earth and the target planet realign with the Sun. The closing wedge shows this angular gap shrinking to zero.</p>
+      <p>Outer planets have shorter synodic periods because Earth catches up quickly. Inner planets have longer synodic periods because the gap closes slowly.</p>
     </div>
   </div>
 
@@ -284,16 +321,31 @@ function updateSpeedDisplay() {
   document.getElementById('speed-display').textContent = label;
 }
 
-document.getElementById('planet-select').addEventListener('change', e => {
-  selected = e.target.value;
-  resetSim();
-});
-document.getElementById('btn-play').addEventListener('click', () => {
+function highlightRefRow() {
+  document.querySelectorAll('.ref-row').forEach(r => r.classList.toggle('active', r.dataset.planet === selected));
+}
+function togglePlay() {
   playing = !playing;
   document.getElementById('btn-play').textContent = playing ? 'Pause' : 'Play';
+}
+document.getElementById('planet-select').addEventListener('change', e => {
+  selected = e.target.value;
+  resetSim(); highlightRefRow();
 });
+document.querySelectorAll('.ref-row').forEach(row => {
+  row.addEventListener('click', () => {
+    selected = row.dataset.planet;
+    document.getElementById('planet-select').value = selected;
+    resetSim(); highlightRefRow();
+  });
+});
+document.getElementById('btn-play').addEventListener('click', togglePlay);
 document.getElementById('btn-reset').addEventListener('click', resetSim);
 document.getElementById('speed-slider').addEventListener('input', updateSpeedDisplay);
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); togglePlay(); }
+});
+highlightRefRow();
 updateSpeedDisplay();
 
 const canvasWrap = document.getElementById('canvas-wrap');
@@ -426,13 +478,13 @@ new p5(p => {
     for (let deg = 0; deg < 360; deg += 10) {
       const pos = atp(cx, cy, tickR, deg);
       const inner = atp(cx, cy, tickR - (deg % 30 === 0 ? 10 : 5), deg);
-      p.stroke(160, 150, 135, deg % 30 === 0 ? 90 : 40);
+      p.stroke(90, 85, 75, deg % 30 === 0 ? 110 : 50);
       p.strokeWeight(deg % 30 === 0 ? 0.8 : 0.4);
       p.line(inner.x, inner.y, pos.x, pos.y);
     }
     // Degree labels every 30°
     p.noStroke();
-    p.fill(140, 130, 118, 140);
+    p.fill(70, 65, 58, 160);
     p.textSize(13);
     p.textAlign(p.CENTER, p.CENTER);
     for (let deg = 0; deg < 360; deg += 30) {

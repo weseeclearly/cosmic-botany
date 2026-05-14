@@ -525,7 +525,8 @@ new p5(p => {
     p.background(210, 222, 230);
     const cx = cw / 2;
     const cy = ch / 2;
-    const maxR = Math.min(cw, ch) * 0.38;
+    const smallCanvas = Math.min(cw, ch) < 500;
+    const maxR = Math.min(cw, ch) * (smallCanvas ? 0.32 : 0.38);
 
     // Soft radial wash
     for (let r = maxR * 1.15; r > 0; r -= 4) {
@@ -550,10 +551,12 @@ new p5(p => {
     // Degree labels every 30°
     p.noStroke();
     p.fill(70, 65, 58, 160);
-    p.textSize(13);
+    p.textSize(smallCanvas ? 11 : 13);
     p.textAlign(p.CENTER, p.CENTER);
     for (let deg = 0; deg < 360; deg += 30) {
-      const lPos = atp(cx, cy, tickR + 15, deg);
+      if (deg === 0 || deg === 180) continue;
+      const lPos = atp(cx, cy, tickR + (smallCanvas ? 12 : 15), deg);
+      if (lPos.y < 10 || lPos.y > ch - 10 || lPos.x < 10 || lPos.x > cw - 10) continue;
       p.text(deg + '°', lPos.x, lPos.y);
     }
 
@@ -720,8 +723,8 @@ new p5(p => {
     p.fill(140, 195, 150, 70); p.ellipse(ePos.x + es * 0.12, ePos.y - es * 0.15, es * 0.25, es * 0.25);
     // Angle readout near Earth
     p.fill(50, 100, 65, 210);
-    p.textSize(15); p.textAlign(p.CENTER, p.BOTTOM);
-    p.text('⊕ ' + Math.floor(earthAngle % 360) + '°', ePos.x, ePos.y - es - 5);
+    p.textSize(smallCanvas ? 12 : 15); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text('⊕ ' + Math.floor(earthAngle % 360) + '°', ePos.x, ePos.y - es - 3);
 
     // Target
     let tc = [...pColor];
@@ -739,21 +742,22 @@ new p5(p => {
     p.fill(tc[0], tc[1], tc[2]); p.ellipse(tPos.x, tPos.y, ts, ts);
     // Angle readout near target
     p.fill(tc[0], tc[1], tc[2], 220);
-    p.textSize(15); p.textAlign(p.CENTER, p.BOTTOM);
-    p.text(SYMBOLS[selected] + ' ' + Math.floor(targetAngle % 360) + '°', tPos.x, tPos.y - ts - 5);
+    p.textSize(smallCanvas ? 12 : 15); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text(SYMBOLS[selected] + ' ' + Math.floor(targetAngle % 360) + '°', tPos.x, tPos.y - ts - 3);
 
     // Status
+    const statusY = Math.min(cy + maxR + 28, ch - 14);
     p.textAlign(p.CENTER, p.CENTER);
     if (!playing && elapsedDays === 0) {
-      p.fill(130, 120, 110, 140); p.textSize(14);
-      p.text('Space to play  ·  Scroll to adjust speed', cx, cy + maxR + 28);
+      p.fill(130, 120, 110, 140); p.textSize(smallCanvas ? 12 : 14);
+      p.text(smallCanvas ? 'Tap Play to begin' : 'Space to play  ·  Scroll to adjust speed', cx, statusY);
     } else if (!playing && events.length > 0) {
-      p.fill(130, 120, 110, 120); p.textSize(13);
+      p.fill(130, 120, 110, 120); p.textSize(smallCanvas ? 11 : 13);
       const evLabel = events[eventIdx]?.type === 'synodic' ? 'Synodic lock' : 'Sidereal lock';
-      p.text(evLabel + ' #' + (eventIdx + 1) + '  ·  Space to continue  ·  ← → to step', cx, cy + maxR + 28);
+      p.text(smallCanvas ? evLabel + ' #' + (eventIdx + 1) : evLabel + ' #' + (eventIdx + 1) + '  ·  Space to continue  ·  ← → to step', cx, statusY);
     } else if (playing) {
-      p.fill(130, 120, 110, 60); p.textSize(12);
-      p.text('← → step between events', cx, cy + maxR + 28);
+      p.fill(130, 120, 110, 60); p.textSize(smallCanvas ? 10 : 12);
+      p.text(smallCanvas ? '' : '← → step between events', cx, statusY);
     }
   };
 });

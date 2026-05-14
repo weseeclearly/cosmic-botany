@@ -321,22 +321,22 @@ new p5(p => {
 
   function drawGhost(pos, color, size, label) {
     p.noFill();
-    p.stroke(color[0], color[1], color[2], 130);
+    p.stroke(color[0], color[1], color[2], 140);
     p.strokeWeight(1);
     p.ellipse(pos.x, pos.y, size * 2.6, size * 2.6);
     const arm = size * 1.5;
-    p.stroke(color[0], color[1], color[2], 45);
+    p.stroke(color[0], color[1], color[2], 50);
     p.strokeWeight(0.5);
     p.line(pos.x - arm, pos.y, pos.x + arm, pos.y);
     p.line(pos.x, pos.y - arm, pos.x, pos.y + arm);
     p.noStroke();
-    p.fill(color[0], color[1], color[2], 190);
+    p.fill(color[0], color[1], color[2], 200);
     p.ellipse(pos.x, pos.y, size * 0.5, size * 0.5);
     if (label) {
-      p.fill(color[0], color[1], color[2], 160);
-      p.textSize(10);
+      p.fill(color[0], color[1], color[2], 180);
+      p.textSize(13);
       p.textAlign(p.CENTER, p.TOP);
-      p.text(label, pos.x, pos.y + size * 1.8);
+      p.text(label, pos.x, pos.y + size * 1.6);
     }
   }
 
@@ -425,18 +425,18 @@ new p5(p => {
     const tickR = maxR * 1.08;
     for (let deg = 0; deg < 360; deg += 10) {
       const pos = atp(cx, cy, tickR, deg);
-      const inner = atp(cx, cy, tickR - (deg % 30 === 0 ? 8 : 4), deg);
-      p.stroke(160, 150, 135, deg % 30 === 0 ? 80 : 35);
+      const inner = atp(cx, cy, tickR - (deg % 30 === 0 ? 10 : 5), deg);
+      p.stroke(160, 150, 135, deg % 30 === 0 ? 90 : 40);
       p.strokeWeight(deg % 30 === 0 ? 0.8 : 0.4);
       p.line(inner.x, inner.y, pos.x, pos.y);
     }
     // Degree labels every 30°
     p.noStroke();
-    p.fill(140, 130, 118, 120);
-    p.textSize(10);
+    p.fill(140, 130, 118, 140);
+    p.textSize(13);
     p.textAlign(p.CENTER, p.CENTER);
     for (let deg = 0; deg < 360; deg += 30) {
-      const lPos = atp(cx, cy, tickR + 12, deg);
+      const lPos = atp(cx, cy, tickR + 15, deg);
       p.text(deg + '°', lPos.x, lPos.y);
     }
 
@@ -447,10 +447,10 @@ new p5(p => {
     p.ellipse(cx, cy, tickR * 2, tickR * 2);
 
     // Orbit rings
-    p.strokeWeight(1);
-    p.stroke(180, 160, 120, 60);
+    p.strokeWeight(1.2);
+    p.stroke(180, 160, 120, 65);
     p.ellipse(cx, cy, earthR * 2, earthR * 2);
-    p.stroke(180, 160, 120, 45);
+    p.stroke(180, 160, 120, 50);
     p.ellipse(cx, cy, targetR * 2, targetR * 2);
 
     // Start line — 0°
@@ -517,8 +517,8 @@ new p5(p => {
       const midA = (actualStart + actualEnd) / 2;
       const labelR = wedgeR * 0.45;
       const labelPos = { x: cx + Math.cos(midA) * labelR, y: cy + Math.sin(midA) * labelR };
-      p.fill(110, 92, 153, 100);
-      p.textSize(11);
+      p.fill(110, 92, 153, 120);
+      p.textSize(14);
       p.textAlign(p.CENTER, p.CENTER);
       const displayAngle = relAngle > 180 ? 360 - relAngle : relAngle;
       if (displayAngle > 5) {
@@ -531,7 +531,7 @@ new p5(p => {
       const sE = atp(cx, cy, earthR, siderealSnapshot.earthAngle);
       const sT = atp(cx, cy, targetR, siderealSnapshot.targetAngle);
       const sC = [77, 126, 94];
-      const gs = Math.max(7, maxR * 0.028);
+      const gs = Math.max(9, maxR * 0.04);
 
       p.stroke(sC[0], sC[1], sC[2], 30);
       p.strokeWeight(0.8);
@@ -564,7 +564,7 @@ new p5(p => {
       const synE = atp(cx, cy, earthR, synodicSnapshot.earthAngle);
       const synT = atp(cx, cy, targetR, synodicSnapshot.targetAngle);
       const synC = [110, 92, 153];
-      const gs = Math.max(7, maxR * 0.028);
+      const gs = Math.max(9, maxR * 0.04);
 
       const alignAngle = p.radians(-90 + synodicSnapshot.earthAngle);
       const far = tickR;
@@ -592,28 +592,28 @@ new p5(p => {
     p.line(ePos.x, ePos.y, tPos.x, tPos.y);
 
     // Sun
-    const sp = 8 + Math.sin(p.frameCount * 0.02);
+    const sp = 10 + Math.sin(p.frameCount * 0.02) * 1;
     p.noStroke();
     p.fill(200, 146, 42, 8); p.ellipse(cx, cy, sp * 5, sp * 5);
     p.fill(200, 146, 42, 18); p.ellipse(cx, cy, sp * 3, sp * 3);
-    p.fill(200, 146, 42, 45); p.ellipse(cx, cy, sp * 1.8, sp * 1.8);
-    p.fill(200, 146, 42); p.ellipse(cx, cy, sp * 0.7, sp * 0.7);
-    p.fill(250, 240, 220); p.textSize(7); p.textAlign(p.CENTER, p.CENTER);
+    p.fill(200, 146, 42, 50); p.ellipse(cx, cy, sp * 1.8, sp * 1.8);
+    p.fill(200, 146, 42); p.ellipse(cx, cy, sp * 0.9, sp * 0.9);
+    p.fill(250, 240, 220); p.textSize(9); p.textAlign(p.CENTER, p.CENTER);
     p.text('☉', cx, cy);
 
     // Earth
-    const es = Math.max(7, maxR * 0.028);
+    const es = Math.max(10, maxR * 0.042);
     p.noStroke();
-    p.fill(78, 117, 150, 20); p.ellipse(ePos.x, ePos.y, es * 3, es * 3);
+    p.fill(78, 117, 150, 25); p.ellipse(ePos.x, ePos.y, es * 3, es * 3);
     p.fill(78, 117, 150); p.ellipse(ePos.x, ePos.y, es, es);
     // Angle readout near Earth
-    p.fill(78, 117, 150, 150);
-    p.textSize(10); p.textAlign(p.CENTER, p.BOTTOM);
-    p.text('⊕ ' + Math.floor(earthAngle % 360) + '°', ePos.x, ePos.y - es - 3);
+    p.fill(78, 117, 150, 180);
+    p.textSize(13); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text('⊕ ' + Math.floor(earthAngle % 360) + '°', ePos.x, ePos.y - es - 4);
 
     // Target
     let tc = [...pColor];
-    const ts = Math.max(7, maxR * 0.028);
+    const ts = Math.max(10, maxR * 0.042);
     if (siderealFlashTimer > 0 && !synodicReached) {
       const fl = (Math.sin(siderealFlashTimer * 0.2) + 1) * 0.5;
       tc = [p.lerp(pColor[0], 77, fl), p.lerp(pColor[1], 126, fl), p.lerp(pColor[2], 94, fl)];
@@ -626,9 +626,9 @@ new p5(p => {
     p.fill(tc[0], tc[1], tc[2], 20); p.ellipse(tPos.x, tPos.y, ts * 3, ts * 3);
     p.fill(tc[0], tc[1], tc[2]); p.ellipse(tPos.x, tPos.y, ts, ts);
     // Angle readout near target
-    p.fill(tc[0], tc[1], tc[2], 150);
-    p.textSize(10); p.textAlign(p.CENTER, p.BOTTOM);
-    p.text(SYMBOLS[selected] + ' ' + Math.floor(targetAngle % 360) + '°', tPos.x, tPos.y - ts - 3);
+    p.fill(tc[0], tc[1], tc[2], 180);
+    p.textSize(13); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text(SYMBOLS[selected] + ' ' + Math.floor(targetAngle % 360) + '°', tPos.x, tPos.y - ts - 4);
 
     // Status
     if (!playing && elapsedDays === 0) {

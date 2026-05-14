@@ -385,8 +385,8 @@ new p5(p => {
     p.fill(color[0], color[1], color[2], 200);
     p.ellipse(pos.x, pos.y, size * 0.5, size * 0.5);
     if (label) {
-      p.fill(color[0], color[1], color[2], 180);
-      p.textSize(13);
+      p.fill(color[0], color[1], color[2], 210);
+      p.textSize(15);
       p.textAlign(p.CENTER, p.TOP);
       p.text(label, pos.x, pos.y + size * 1.6);
     }
@@ -499,10 +499,10 @@ new p5(p => {
     p.ellipse(cx, cy, tickR * 2, tickR * 2);
 
     // Orbit rings
-    p.strokeWeight(1.2);
-    p.stroke(180, 160, 120, 65);
+    p.strokeWeight(1.8);
+    p.stroke(150, 135, 105, 70);
     p.ellipse(cx, cy, earthR * 2, earthR * 2);
-    p.stroke(180, 160, 120, 50);
+    p.stroke(150, 135, 105, 55);
     p.ellipse(cx, cy, targetR * 2, targetR * 2);
 
     // Start line — 0°
@@ -639,8 +639,8 @@ new p5(p => {
     }
 
     // Live connector
-    p.stroke(181, 99, 111, synodicReached ? 100 : 30);
-    p.strokeWeight(synodicReached ? 1.5 : 0.7);
+    p.stroke(160, 80, 95, synodicReached ? 120 : 50);
+    p.strokeWeight(synodicReached ? 2 : 1.2);
     p.line(ePos.x, ePos.y, tPos.x, tPos.y);
 
     // Sun
@@ -659,9 +659,9 @@ new p5(p => {
     p.fill(78, 117, 150, 25); p.ellipse(ePos.x, ePos.y, es * 3, es * 3);
     p.fill(78, 117, 150); p.ellipse(ePos.x, ePos.y, es, es);
     // Angle readout near Earth
-    p.fill(78, 117, 150, 180);
-    p.textSize(13); p.textAlign(p.CENTER, p.BOTTOM);
-    p.text('⊕ ' + Math.floor(earthAngle % 360) + '°', ePos.x, ePos.y - es - 4);
+    p.fill(50, 85, 115, 210);
+    p.textSize(15); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text('⊕ ' + Math.floor(earthAngle % 360) + '°', ePos.x, ePos.y - es - 5);
 
     // Target
     let tc = [...pColor];
@@ -678,9 +678,9 @@ new p5(p => {
     p.fill(tc[0], tc[1], tc[2], 20); p.ellipse(tPos.x, tPos.y, ts * 3, ts * 3);
     p.fill(tc[0], tc[1], tc[2]); p.ellipse(tPos.x, tPos.y, ts, ts);
     // Angle readout near target
-    p.fill(tc[0], tc[1], tc[2], 180);
-    p.textSize(13); p.textAlign(p.CENTER, p.BOTTOM);
-    p.text(SYMBOLS[selected] + ' ' + Math.floor(targetAngle % 360) + '°', tPos.x, tPos.y - ts - 4);
+    p.fill(tc[0], tc[1], tc[2], 220);
+    p.textSize(15); p.textAlign(p.CENTER, p.BOTTOM);
+    p.text(SYMBOLS[selected] + ' ' + Math.floor(targetAngle % 360) + '°', tPos.x, tPos.y - ts - 5);
 
     // Status
     if (!playing && elapsedDays === 0) {
